@@ -609,11 +609,14 @@ All routes below must be implemented or explicitly documented as deferred. Prote
 
 | Method | Endpoint | Access |
 |---|---|---|
+| POST | `/auth/demo-login` | Development only; seeded role account |
 | POST | `/auth/send-otp` | Public |
 | POST | `/auth/verify-otp` | Public |
 | POST | `/auth/logout` | Authenticated |
 | GET | `/auth/me` | Authenticated |
 | PATCH | `/auth/profile` | Authenticated |
+
+`/auth/demo-login` accepts `{"role":"farmer"}`, `{"role":"officer"}` or `{"role":"admin"}` and is available only when `DEMO_LOGIN_ENABLED=true` outside production. It is intended for demonstration environments and must not be used as production authentication.
 
 ## 8.2 Farmer APIs
 

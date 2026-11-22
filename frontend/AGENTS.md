@@ -41,3 +41,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Frontend verification: `npm run typecheck` passed; `npm run build` passed.
 - Live verification: backend on port `8001`, frontend on port `3000`; status, OTP and `/register` smoke checks passed.
 - Known next task: integrate Supabase credentials and migrations/RLS if provided, or continue frontend data-page integration using the working demo API.
+
+## One-click demo login
+
+- Added `POST /api/v1/auth/demo-login` for the seeded farmer, officer and admin accounts.
+- Demo login requires `DEMO_LOGIN_ENABLED=true` and is rejected in production.
+- Login screen exposes a button for each role; clicking it creates a demo session and opens that portal without requesting profile details or OTP.
+- Backend verification: `uv run pytest` — 12 tests passed, including each role and production denial.
+- Frontend verification: `npm run typecheck` and `npm run build` passed.
+- Live verification: all three role endpoints returned the expected role; `/login` returned HTTP 200.
+- Local services: frontend `http://localhost:3000`, backend `http://localhost:8001`.

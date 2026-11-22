@@ -2,10 +2,18 @@
 
 ## Last completed task
 
-Farmer registration is now connected end to end:
+One-click demo login is implemented for all three portals:
+
+- The login page has a dedicated button for Farmer, Government Officer and Administrator.
+- Clicking a role signs into its seeded demo account and opens the matching dashboard without requesting details or OTP.
+- `POST /api/v1/auth/demo-login` issues an account-specific session.
+- The endpoint requires `DEMO_LOGIN_ENABLED=true` and refuses all production environments.
+
+The prior completed task connected farmer registration end to end:
 
 - `POST /api/v1/auth/send-otp`
 - `POST /api/v1/auth/register`
+- `POST /api/v1/auth/demo-login`
 - Unique KrishiSetu farmer ID creation
 - Duplicate-mobile conflict handling
 - OTP verification and persisted session creation
@@ -13,7 +21,7 @@ Farmer registration is now connected end to end:
 
 ## Verified
 
-- Backend: `uv run pytest` — 10 passed
+- Backend: `uv run pytest` — 12 passed
 - Frontend: `npm run typecheck` — passed
 - Frontend: `npm run build` — passed
 - Live: status and OTP smoke checks passed
@@ -50,3 +58,11 @@ Farmer registration is now connected end to end:
 ## Next task
 
 Complete page-level integration for the remaining farmer and officer views so they fetch the same demo backend records rather than component-level sample values. Start with `/farmer/dashboard`, then `/farmer/schemes`, `/farmer/benefits` and `/farmer/applications`.
+
+## Latest demo-login verification
+
+- Backend: `uv run pytest` — 12 passed
+- Frontend: `npm run typecheck` — passed
+- Frontend: `npm run build` — passed
+- Live role smoke tests: farmer, officer and admin logins returned matching seeded roles.
+- Local backend listens on port `8001` because port `8000` is held by a stale environment listener.

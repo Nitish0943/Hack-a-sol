@@ -132,6 +132,11 @@ export async function apiRequest<T>(
 }
 
 export const authApi = {
+  demoLogin: (role: "farmer" | "officer" | "admin") =>
+    apiRequest<{ accessToken: string; user: { role: string }; isDemo: true }>("/auth/demo-login", {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    }),
   sendOtp: (mobileNumber: string) =>
     apiRequest<{ expiresInSeconds: number; demoOtp: string }>("/auth/send-otp", {
       method: "POST",

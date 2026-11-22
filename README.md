@@ -69,6 +69,8 @@ Demo login OTP:
 - OTP: `123456`
 - Roles: `farmer`, `officer`, `admin`
 
+Alternatively, open `/login` and click **Continue as Farmer**, **Continue as Government Officer**, or **Continue as Administrator** for one-click demo access. This feature requires `DEMO_LOGIN_ENABLED=true` and is disabled in production.
+
 Backend verification:
 
 ```powershell

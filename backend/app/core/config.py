@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     app_environment: str = "development"
     frontend_origins: str = "http://localhost:3000"
     demo_otp_enabled: bool = True
+    demo_login_enabled: bool = False
     demo_otp: str = "123456"
     database_path: str = "./krishisetu.db"
 
