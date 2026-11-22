@@ -1,0 +1,5 @@
+import { Card, PageHeading } from "@/components/ui-kit";
+
+export default function AdminSettingsPage() {
+  return <div><PageHeading title="Platform Configuration" description="Demo platform settings" /><div className="grid gap-5 lg:grid-cols-2"><Card><h3 className="font-bold">General settings</h3><div className="mt-4 space-y-4"><label className="block text-sm font-semibold">Default language<select className="field mt-2"><option>Hindi</option><option>English</option></select></label><label className="block text-sm font-semibold">Primary region<input className="field mt-2" defaultValue="Chhattisgarh" /></label><button className="rounded-xl bg-[#166534] px-4 py-3 text-sm font-semibold text-white">Save settings</button></div></Card><Card><h3 className="font-bold">Integration readiness</h3><div className="mt-4 space-y-3 text-sm">{[["Supabase Auth","Not configured"],["Supabase Storage","Not configured"],["IVR provider","Not configured"],["SMS provider","Not configured"]].map(row=><div key={row[0]} className="flex justify-between rounded-xl bg-slate-50 p-3"><span>{row[0]}</span><b className="text-slate-500">{row[1]}</b></div>)}</div></Card></div></div>;
+}

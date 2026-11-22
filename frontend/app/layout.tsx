@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Full-Stack Starter",
-  description: "Next.js and FastAPI development starter",
+  title: "KrishiSetu | Know Your Benefits",
+  description: "Agricultural policy, loan and subsidy transparency platform",
 };
 
 export default function RootLayout({

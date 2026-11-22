@@ -1,0 +1,5 @@
+import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+
+export default function OfficerGrievanceDetailPage() {
+  return <div><PageHeading title="Grievance GRV-CG-10482" description="Ramesh Kumar · Incorrect subsidy amount" action={<StatusBadge status="Under review" />} /><div className="grid gap-5 lg:grid-cols-[1fr_340px]"><Card><h3 className="font-bold">Complaint</h3><p className="mt-3 text-sm leading-7 text-slate-600">The recorded sanction amount differs from the estimated benefit for PM-KISAN application KS-2026-10482.</p><h3 className="mt-6 font-bold">Previous remarks</h3><p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Case assigned for evidence review on 21 November.</p></Card><Card><h3 className="font-bold">Resolution</h3><select className="field mt-4"><option>Under review</option><option>Information required</option><option>Resolved</option><option>Closed</option></select><textarea className="field mt-3 min-h-28" placeholder="Authorized officer remarks" /><button className="mt-3 w-full rounded-xl bg-[#166534] px-4 py-3 text-sm font-semibold text-white">Update & log action</button></Card></div></div>;
+}

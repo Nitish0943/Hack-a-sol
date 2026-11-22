@@ -1,0 +1,5 @@
+import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+
+export default function EligibilityResultPage() {
+  return <div><PageHeading title="Eligibility Result" description="Evaluation on 22 November 2026" action={<StatusBadge status="Potentially eligible" />} /><Card><h3 className="text-lg font-bold">PM-KISAN Income Support</h3><p className="mt-2 text-sm text-slate-500">Policy 2026-CG-PMKS-01</p><div className="mt-6 grid gap-3 sm:grid-cols-2">{[["State & location","Satisfied"],["Landholding","Satisfied"],["Cultivator status","Satisfied"],["Land record evidence","Additional verification"]].map(([label,status]) => <div key={label} className="rounded-xl border border-slate-100 p-4"><p className="text-sm text-slate-500">{label}</p><div className="mt-2"><StatusBadge status={status} /></div></div>)}</div><p className="mt-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Upload or verify the land record to complete the evidence check. This result is not an official approval.</p></Card></div>;
+}

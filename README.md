@@ -39,3 +39,13 @@ uv run pytest
 ```
 
 The initial API includes `GET /`, `GET /health`, and `GET /api/v1/status`.
+
+## KrishiSetu frontend
+
+The frontend now includes the public landing, login and registration journeys plus separate farmer, government officer and administrator portals. Start it with `cd frontend && npm run dev`, then open `http://localhost:3000`.
+
+Use the demo login to explore each role:
+
+- Farmer: `/farmer/dashboard`
+- Officer: `/officer/dashboard`
+- Administrator: `/admin/dashboard`

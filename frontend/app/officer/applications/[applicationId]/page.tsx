@@ -1,0 +1,5 @@
+import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+
+export default function OfficerApplicationDetailPage() {
+  return <div><PageHeading title="Application KS-2026-10482" description="PM-KISAN · Ramesh Kumar" action={<StatusBadge status="Under review" />} /><div className="grid gap-5 lg:grid-cols-[1fr_340px]"><Card><h3 className="font-bold">Supporting records</h3><div className="mt-4 space-y-3">{["Land record.pdf","Cultivation declaration.pdf","Farmer ID.jpg"].map(doc=><div key={doc} className="flex items-center justify-between rounded-xl border border-slate-100 p-3 text-sm"><span>{doc}</span><button className="font-semibold text-[#166534]">View</button></div>)}</div></Card><Card><h3 className="font-bold">Review action</h3><select className="field mt-4"><option>Under review</option><option>Documents required</option><option>Approved</option><option>Rejected</option></select><textarea className="field mt-3 min-h-28" placeholder="Authorized officer remarks" /><button className="mt-3 w-full rounded-xl bg-[#166534] px-4 py-3 text-sm font-semibold text-white">Record decision</button></Card></div></div>;
+}

@@ -1,22 +1,22 @@
 @import "tailwindcss";
-
 :root {
   color-scheme: light;
-  --background: #f5f7f5;
-  --foreground: #18231e;
-  --muted: #64736a;
-  --line: #dce4de;
+  --background: #F8FAF5;
+  --foreground: #1F2937;
+  --muted: #64748b;
+  --line: #e2e8f0;
   --surface: #ffffff;
-  --accent: #176b50;
+  --accent: #166534;
 }
-
 * {
   box-sizing: border-box;
 }
-
-body {
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "Aptos", "Segoe UI", sans-serif;
-}
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--background); color: var(--foreground); font-family: "Aptos", "Segoe UI", "Noto Sans Devanagari", sans-serif; }
+button, a, input, select, textarea { outline-offset: 3px; }
+.field { width: 100%; border-radius: 12px; border: 1px solid #dbe4dc; background: white; padding: 10px 12px; font-size: 14px; color: #1f2937; }
+.field:focus { border-color: #166534; box-shadow: 0 0 0 3px rgba(22,101,52,.10); outline: none; }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { width: 100%; border-collapse: collapse; min-width: 680px; }
+.table-wrap th { padding: 12px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; background: #f8fafc; }
+.table-wrap td { padding: 14px; border-top: 1px solid #eef2f0; font-size: 13px; }
