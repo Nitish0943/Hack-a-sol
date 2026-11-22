@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export type PortalLink = {
   href: string;
@@ -104,6 +105,7 @@ export function PortalLayout({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <button aria-label="Search" className="hidden size-10 place-items-center rounded-xl border border-slate-200 text-slate-500 sm:grid">
               <Search className="size-4" />
             </button>
