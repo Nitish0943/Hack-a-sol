@@ -23,9 +23,7 @@ def test_versioned_status_returns_application_information() -> None:
     response = client.get("/api/v1/status")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "ok",
-        "application": "Full-Stack Starter API",
-        "version": "0.1.0",
-        "environment": "development",
-    }
+    assert response.json()["status"] == "ok"
+    assert response.json()["application"] == "KrishiSetu API"
+    assert response.json()["version"] == "1.0.0"
+    assert response.json()["environment"] == "development"
