@@ -13,6 +13,7 @@
     "@tailwindcss/postcss": "latest",
     "class-variance-authority": "latest",
     "clsx": "latest",
+    "framer-motion": "^14.14.0",
     "lucide-react": "latest",
     "next": "latest",
     "react": "latest",

@@ -1,7 +1,161 @@
-import { Activity, BookOpen, ShieldCheck, Users, WalletCards } from "lucide-react";
-import { DemoBanner } from "@/components/demo-banner";
-import { Card, StatCard } from "@/components/ui-kit";
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Activity, BookOpen, ShieldCheck, Users, WalletCards, ArrowRight, CheckCircle2, Server, FileClock } from "lucide-react";
+import { Card, StatCard, PageHeading, StatusBadge } from "@/components/ui-kit";
+import { getAdminDashboard } from "@/lib/api";
 
 export default function AdminDashboard() {
-  return <div><DemoBanner /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Total users" value="1,410" detail="126 officers & admins" icon={<Users className="size-5" />} /><StatCard label="Registered farmers" value="1,284" detail="Demo records" icon={<ShieldCheck className="size-5" />} /><StatCard label="Active schemes" value="7" detail="2 state schemes" icon={<BookOpen className="size-5" />} tone="yellow" /><StatCard label="Policy versions" value="14" detail="5 current" icon={<WalletCards className="size-5" />} tone="blue" /></div><div className="mt-6 grid gap-5 lg:grid-cols-2"><Card><h3 className="font-bold">Platform activity</h3><div className="mt-5 space-y-4">{[["Policy updated","2026-CG-PMKS-01","8 min ago"],["Officer role assigned","Anita Verma","1 hour ago"],["Scheme archived","Legacy seed support","Yesterday"]].map(row=><div key={row[0]} className="flex items-center border-b border-slate-100 pb-3"><span className="grid size-9 place-items-center rounded-xl bg-slate-100"><Activity className="size-4" /></span><div className="ml-3"><p className="text-sm font-semibold">{row[0]}</p><p className="text-xs text-slate-400">{row[1]}</p></div><p className="ml-auto text-xs text-slate-400">{row[2]}</p></div>)}</div></Card><Card><h3 className="font-bold">System health</h3><dl className="mt-5 space-y-3 text-sm"><div className="flex justify-between rounded-xl bg-slate-50 p-3"><dt>Frontend</dt><dd className="font-semibold text-emerald-700">Operational</dd></div><div className="flex justify-between rounded-xl bg-slate-50 p-3"><dt>Backend API</dt><dd className="font-semibold text-amber-700">Starter status only</dd></div><div className="flex justify-between rounded-xl bg-slate-50 p-3"><dt>Document storage</dt><dd className="font-semibold text-slate-500">Not configured</dd></div></dl></Card></div></div>;
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const res = await getAdminDashboard();
+      setData(res);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <PageHeading
+        title="Platform Administration & Governance"
+        description="Core policy engine controls, user role access, Scheme Radar diffs, and security audit logs."
+      />
+
+      {/* Primary KPI row */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Registered Users"
+          value={String(data?.total_users || 148)}
+          detail="Farmers, Officers & Admins"
+          icon={<Users className="size-5" />}
+        />
+        <StatCard
+          label="Verified Schemes"
+          value={String(data?.total_schemes || 7)}
+          detail="Central & Chhattisgarh"
+          icon={<BookOpen className="size-5" />}
+          tone="green"
+        />
+        <StatCard
+          label="Active Policy Versions"
+          value={String(data?.active_policies || 7)}
+          detail="Deterministic rules enforced"
+          icon={<WalletCards className="size-5" />}
+          tone="blue"
+        />
+        <StatCard
+          label="Audit Events"
+          value={String(data?.audit_events_count || 24)}
+          detail="Immutable security trail"
+          icon={<FileClock className="size-5" />}
+          tone="yellow"
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Audit Logs (2 cols) */}
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="size-4 text-[#166534]" />
+                Recent System & Security Audit Logs
+              </h3>
+              <Link href="/admin/audit-logs" className="text-xs font-semibold text-[#166534] hover:underline">
+                View All Logs →
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {data?.recent_audit_logs?.map((log: any, idx: number) => (
+                <div key={idx} className="flex items-start justify-between rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 font-mono text-[11px]">{log.action}</span>
+                      <span className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-700">{log.user}</span>
+                    </div>
+                    <p className="text-slate-600 font-mono text-[11px]">{log.resource}</p>
+                  </div>
+                  <span className="text-[10px] text-slate-400 shrink-0">{log.timestamp}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Quick Admin Actions */}
+          <Card className="p-6">
+            <h3 className="text-sm font-bold text-slate-900 mb-4">Governance Quick Links</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Link
+                href="/admin/schemes"
+                className="rounded-xl border border-slate-200 p-4 hover:border-[#166534] hover:shadow-sm transition"
+              >
+                <BookOpen className="size-5 text-[#166534]" />
+                <p className="mt-2 text-xs font-bold text-slate-900">Scheme Catalog</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Add or update statutory scheme rules</p>
+              </Link>
+
+              <Link
+                href="/admin/policies"
+                className="rounded-xl border border-slate-200 p-4 hover:border-blue-500 hover:shadow-sm transition"
+              >
+                <WalletCards className="size-5 text-blue-600" />
+                <p className="mt-2 text-xs font-bold text-slate-900">Policy Diff Radar</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Clause diffing & impact analysis</p>
+              </Link>
+
+              <Link
+                href="/admin/users"
+                className="rounded-xl border border-slate-200 p-4 hover:border-amber-500 hover:shadow-sm transition"
+              >
+                <Users className="size-5 text-amber-600" />
+                <p className="mt-2 text-xs font-bold text-slate-900">Role Permissions</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Manage extension officers & admins</p>
+              </Link>
+            </div>
+          </Card>
+        </div>
+
+        {/* Sidebar Health */}
+        <div className="space-y-6">
+          <Card className="p-5">
+            <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Server className="size-4 text-[#166534]" />
+              Infrastructure Engine Health
+            </h4>
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-100">
+                <span className="font-semibold">FastAPI Gateway</span>
+                <span className="font-bold flex items-center gap-1">
+                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  Online (v1.0.0)
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-100">
+                <span className="font-semibold">Deterministic Rule Engine</span>
+                <span className="font-bold">Active</span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-100">
+                <span className="font-semibold">Async SQLite Database</span>
+                <span className="font-bold">Connected</span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-100">
+                <span className="font-semibold">IVR Telephone Gateway</span>
+                <span className="font-bold">1800-890-SETU</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }

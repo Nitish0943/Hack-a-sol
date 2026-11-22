@@ -4,10 +4,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Full-Stack Starter API"
-    app_version: str = "0.1.0"
+    app_name: str = "KrishiSetu API"
+    app_version: str = "1.0.0"
     app_environment: str = "development"
-    frontend_origins: str = "http://localhost:3000"
+    frontend_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     model_config = SettingsConfigDict(
         env_file=".env",
