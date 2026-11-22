@@ -38,9 +38,16 @@ class PolicyIngestionPipeline:
 
         file_path = Path(metadata.local_path)
         if not file_path.exists():
-            raise FileNotFoundError(
-                f"Source document file does not exist at path: {metadata.local_path}"
-            )
+            # Attempt resolving relative to RAG sample_policies directory
+            rag_dir = Path(__file__).resolve().parent
+            alt_path = rag_dir / "sample_policies" / file_path.name
+            if alt_path.exists():
+                file_path = alt_path
+                metadata.local_path = str(file_path)
+            else:
+                raise FileNotFoundError(
+                    f"Source document file does not exist at path: {metadata.local_path}"
+                )
 
         if file_path.suffix.lower() != ".pdf":
             raise ValueError(f"Unsupported file format '{file_path.suffix}'. Only .pdf is supported.")
@@ -52,7 +59,12 @@ class PolicyIngestionPipeline:
         """Load multiple document registrations from a JSON manifest file."""
         path = Path(registry_file)
         if not path.exists():
-            raise FileNotFoundError(f"Registry manifest not found at: {path}")
+            rag_dir = Path(__file__).resolve().parent
+            alt = rag_dir / "sample_policies" / path.name
+            if alt.exists():
+                path = alt
+            else:
+                raise FileNotFoundError(f"Registry manifest not found at: {path}")
 
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)

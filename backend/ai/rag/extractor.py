@@ -30,18 +30,22 @@ class PDFDocumentExtractor:
     def extract(self, metadata: DocumentMetadata) -> ExtractionResult:
         """Extract text from a registered PDF document with page-level traceability."""
         file_path = Path(metadata.local_path)
-
         if not file_path.exists():
-            error_msg = f"Document file not found at: {file_path}"
-            logger.error(error_msg)
-            return ExtractionResult(
-                document_id=metadata.document_id,
-                total_pages=0,
-                extracted_pages=[],
-                total_characters=0,
-                extraction_status=IngestionStatus.EXTRACTION_FAILED,
-                error_message=error_msg,
-            )
+            rag_dir = Path(__file__).resolve().parent
+            alt_path = rag_dir / "sample_policies" / file_path.name
+            if alt_path.exists():
+                file_path = alt_path
+            else:
+                error_msg = f"Document file not found at: {file_path}"
+                logger.error(error_msg)
+                return ExtractionResult(
+                    document_id=metadata.document_id,
+                    total_pages=0,
+                    extracted_pages=[],
+                    total_characters=0,
+                    extraction_status=IngestionStatus.EXTRACTION_FAILED,
+                    error_message=error_msg,
+                )
 
         try:
             doc = pymupdf.open(str(file_path))

@@ -31,9 +31,12 @@ from ai.rag.models import (
 from ai.rag.pipeline import PolicyIngestionPipeline
 
 
+RAG_ROOT = Path(__file__).resolve().parent.parent
+
+
 @pytest.fixture
 def sample_registry_path() -> Path:
-    return Path("ai/rag/sample_policies/metadata_registry.json")
+    return RAG_ROOT / "sample_policies" / "metadata_registry.json"
 
 
 @pytest.fixture
@@ -49,7 +52,7 @@ def pm_kisan_metadata() -> DocumentMetadata:
         source_url="https://pmkisan.gov.in/Documents/OperationalGuidelines.pdf",
         publication_date="2024-01-15",
         effective_date="2018-12-01",
-        local_path="ai/rag/sample_policies/pm_kisan_operational_guidelines.pdf",
+        local_path=str(RAG_ROOT / "sample_policies" / "pm_kisan_operational_guidelines.pdf"),
         extraction_status=IngestionStatus.REGISTERED,
     )
 
@@ -65,7 +68,7 @@ def scanned_metadata() -> DocumentMetadata:
         applicable_state="Chhattisgarh",
         document_type=DocumentType.CIRCULAR,
         source_url="https://agriportal.cg.nic.in/circulars/sample.pdf",
-        local_path="ai/rag/sample_policies/scanned_sample_needs_ocr.pdf",
+        local_path=str(RAG_ROOT / "sample_policies" / "scanned_sample_needs_ocr.pdf"),
     )
 
 

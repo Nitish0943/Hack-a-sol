@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -8,6 +9,11 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     app_environment: str = "development"
     frontend_origins: str = "http://localhost:3000"
+
+    # KrishiSetu AI RAG settings
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+    llm_provider: str = "gemini"
 
     model_config = SettingsConfigDict(
         env_file=".env",
