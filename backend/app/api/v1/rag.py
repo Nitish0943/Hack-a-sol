@@ -41,7 +41,7 @@ class RAGStatusResponse(BaseModel):
     service: str = Field(default="KrishiSetu AI RAG")
     indexed_documents: int
     llm_provider: str
-    supported_languages: list[str] = Field(default_factory=lambda: ["en", "hi"])
+    supported_languages: list[str] = Field(default_factory=lambda: ["en", "hi", "chg"])
 
 
 class IndexedScheme(BaseModel):
@@ -65,10 +65,10 @@ class SchemesListResponse(BaseModel):
     "/query",
     response_model=FarmerQueryResponse,
     summary="Query agricultural policies and subsidies",
-    description="Submit an agricultural policy question in English or Hindi. Returns evidence-grounded answers with official citations.",
+    description="Submit an agricultural policy question in English, Hindi, or Chhattisgarhi (छत्तीसगढ़ी). Returns evidence-grounded answers with official citations.",
 )
 async def query_policy(request: FarmerQueryRequest) -> FarmerQueryResponse:
-    """Process a farmer's inquiry through the KrishiSetu RAG pipeline."""
+    """Process a farmer's inquiry through the KrishiSetu RAG pipeline in English, Hindi, or Chhattisgarhi."""
     service = get_rag_service()
     try:
         response = service.query(request)

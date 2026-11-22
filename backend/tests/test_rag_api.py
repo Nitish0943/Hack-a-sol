@@ -64,6 +64,21 @@ def test_rag_query_hindi_ivr() -> None:
     assert data["ivr_summary"] is not None
 
 
+def test_rag_query_chhattisgarhi_endpoint() -> None:
+    """Validate POST /api/v1/rag/query handles Chhattisgarhi language questions."""
+    payload = {
+        "question": "पीएम किसान योजना म कतेक पइसा मिलही?",
+        "response_style": "ivr",
+    }
+    response = client.post("/api/v1/rag/query", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["language"] == "chg"
+    assert data["answer_status"] == "answered"
+    assert "₹6,000" in data["answer"]
+    assert data["ivr_summary"] is not None
+
+
 def test_rag_query_safe_abstention() -> None:
     """Validate POST /api/v1/rag/query safely abstains when evidence is missing."""
     payload = {

@@ -68,6 +68,13 @@ class TestQuestionProcessing:
         assert analysis.identified_scheme == "PM-KISAN"
         assert analysis.category == QueryCategory.BENEFIT_INFORMATION
 
+    def test_detects_chhattisgarhi_query_and_scheme(self) -> None:
+        q = "पीएम किसान योजना म कतेक पइसा मिलही?"
+        analysis = self.generator.analyze_question(q)
+        assert analysis.detected_language == "chg"
+        assert analysis.identified_scheme == "PM-KISAN"
+        assert analysis.category == QueryCategory.BENEFIT_INFORMATION
+
     def test_detects_chhattisgarh_state_query(self) -> None:
         q = "How much paddy bonus is given in Chhattisgarh under Krishak Unnati Yojana?"
         analysis = self.generator.analyze_question(q)
@@ -219,6 +226,14 @@ class TestKisanSetuRAGService:
         resp = rag_service.query(req)
 
         assert resp.language == "hi"
+        assert resp.answer_status == "answered"
+        assert "₹6,000" in resp.answer
+
+    def test_chhattisgarhi_query_handling(self, rag_service: KisanSetuRAGService) -> None:
+        req = FarmerQueryRequest(question="पीएम किसान योजना म कतेक पइसा मिलही?")
+        resp = rag_service.query(req)
+
+        assert resp.language == "chg"
         assert resp.answer_status == "answered"
         assert "₹6,000" in resp.answer
 

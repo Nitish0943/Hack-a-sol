@@ -112,17 +112,29 @@ class MockOfflineProvider(LLMProvider):
         if not inquiry_line:
             inquiry_line = prompt.lower()
 
-        # Detect Hindi vs English query
+        # Detect language (Chhattisgarhi vs Hindi vs English)
+        chg_markers = ["कतेक", "कतका", "मिलही", "पइसा", "रुपिया", "काबर", "हवय", "हेवय", "बर", "छत्तीगढ़ी", "छत्तीसगढ़ी", "धान"]
+        is_chg = any(w in inquiry_line for w in chg_markers) or "chhattisgarhi" in prompt.lower()
         is_hindi = any("\u0900" <= c <= "\u097f" for c in inquiry_line)
 
         # Check for abstention / no evidence
         if "no policy evidence found" in prompt.lower() or "unsupported" in inquiry_line or "supersonic" in inquiry_line:
+            if is_chg:
+                return "माफ करहू, उपलब्ध सरकारी दस्तावेज म एखर बारे म कोनो जानकारी नई मिले हे। अपन गांव के कृषि अधिकारी या समिति म पता करव।"
             if is_hindi:
                 return "क्षमा करें, उपलब्ध आधिकारिक सरकारी नीति दस्तावेजों में इस प्रश्न के लिए पर्याप्त जानकारी नहीं मिली।"
             return "I apologize, but the official policy documents do not contain sufficient evidence to answer this question."
 
         # PMFBY Crop Insurance (check before PM-KISAN to prevent collision on general terms)
         if "pmfby" in inquiry_line or "fasal bima" in inquiry_line or "crop insurance" in inquiry_line or "बीमा" in inquiry_line:
+            if is_chg:
+                return (
+                    "प्रधानमंत्री फसल बीमा योजना (PMFBY) म किसान मन बर प्रीमियम दर हे:\n"
+                    "- खरीफ फसल: अधिकतम 2.0% बीमा राशि के।\n"
+                    "- रबी फसल: अधिकतम 1.5% बीमा राशि के।\n"
+                    "- बागवानी अउ व्यापारिक फसल: अधिकतम 5.0%।\n"
+                    "चोरी, लड़ाई अउ जानबूझ के करे नुकसान म बीमा सहायता नई मिले।"
+                )
             if is_hindi:
                 return (
                     "प्रधानमंत्री फसल बीमा योजना (PMFBY) के तहत किसानों द्वारा देय प्रीमियम दरें:\n"
@@ -141,6 +153,11 @@ class MockOfflineProvider(LLMProvider):
 
         # Chhattisgarh Krishak Unnati Yojana
         if "chhattisgarh" in inquiry_line or "krishak unnati" in inquiry_line or "paddy" in inquiry_line or "धान" in inquiry_line or "छत्तीसगढ़" in inquiry_line:
+            if is_chg:
+                return (
+                    "छत्तीसगढ़ कृषक उन्नति योजना म धान बोय्या किसान मन ला ₹3,100 प्रति क्विंटल के मान ले अंतर राशि (इनपुट सहायता) दे जाथे। "
+                    "एमा प्रति एकड़ 21 क्विंटल तक धान उपार्जन समर्थित हे।"
+                )
             if is_hindi:
                 return (
                     "छत्तीसगढ़ कृषक उन्नति योजना के तहत पंजीकृत धान उत्पादक किसानों को ₹3,100 प्रति क्विंटल का कुल मूल्य सुनिश्चित "
@@ -153,7 +170,16 @@ class MockOfflineProvider(LLMProvider):
 
         # PM-KISAN Scheme
         if "pm-kisan" in inquiry_line or "pm kisan" in inquiry_line or "किसान" in inquiry_line or "सम्मान निधि" in inquiry_line:
-            if any(w in inquiry_line for w in ["exclusion", "not eligible", "who cannot", "ineligible", "अपात्र"]):
+            if any(w in inquiry_line for w in ["exclusion", "not eligible", "who cannot", "ineligible", "अपात्र", "नई मिलही"]):
+                if is_chg:
+                    return (
+                        "पीएम-किसान योजना म ये लोगन मन ला लाभ नई मिलही:\n"
+                        "1. सबो संस्थागत जमीनदार मनखे।\n"
+                        "2. संवैधानिक पद म बइठे मनखे, पूर्व अउ अभी के मंत्री, सांसद, विधायक।\n"
+                        "3. सरकारी कर्मचारी अउ पीएसयू कर्मचारी (चतुर्थ श्रेणी ला छोड़ के)।\n"
+                        "4. ₹10,000 ले जादा मासिक पेंशन पाय्या मनखे।\n"
+                        "5. आयकर देय्या मनखे।"
+                    )
                 if is_hindi:
                     return (
                         "पीएम-किसान योजना के तहत उच्च आर्थिक स्थिति वाले लाभार्थी पात्र नहीं हैं:\n"
@@ -171,6 +197,12 @@ class MockOfflineProvider(LLMProvider):
                     "4. Superannuated pensioners with a monthly pension of ₹10,000/- or more.\n"
                     "5. All persons who paid Income Tax in the last assessment year.\n"
                     "6. Practicing professionals (Doctors, Engineers, Lawyers, Chartered Accountants)."
+                )
+            if is_chg:
+                return (
+                    "पीएम-किसान (PM-KISAN) योजना म पात्र किसान परिवार मन ला हर बछर ₹6,000 के आर्थिक मदद "
+                    "तीन ठन किश्त म ₹2,000-₹2,000 करके दे जाथे। "
+                    "ये पइसा आधार ले जुड़े बैंक खाता म डीबीटी ले सीधा भेजे जाथे।"
                 )
             if is_hindi:
                 return (

@@ -95,6 +95,15 @@ class PolicyRetrievalEngine:
             "रुपये": "rupees benefit amount",
             "पैसे": "financial benefit",
             "कृषक उन्नति": "krishak unnati yojana chhattisgarh",
+            # Chhattisgarhi dialect mappings
+            "कतेक": "how much benefit amount",
+            "कतका": "how much benefit amount",
+            "मिलही": "receive benefit get",
+            "पइसा": "rupees money benefit",
+            "रुपिया": "rupees money benefit",
+            "जमीन": "landholding cultivable",
+            "बोनस": "input assistance ₹3,100 paddy",
+            "बछर": "year annual ₹6,000",
         }
         for hi, en in hindi_mappings.items():
             if hi in query:
