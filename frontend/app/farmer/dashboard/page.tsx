@@ -17,10 +17,13 @@ import {
   Volume2,
   WalletCards,
   Wheat,
+  Activity,
+  Layers,
+  MapPin,
+  TrendingUp,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { DemoBanner } from "@/components/demo-banner";
-import { Card, StatCard, StatusBadge, VoiceAssistButton } from "@/components/ui-kit";
+import { Card, StatCard, StatusBadge, VoiceAssistButton, BentoGrid, BentoCard } from "@/components/ui-kit";
 import { useTranslation } from "@/lib/i18n/context";
 import { getFarmerDashboard } from "@/lib/api";
 
@@ -72,245 +75,245 @@ export default function FarmerDashboard() {
 
   return (
     <div className="space-y-6">
-      <DemoBanner />
-
-      {/* Hero Welcome Glass Banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-forest-950 p-6 text-white shadow-xl sm:p-8 border border-white/10 backdrop-blur-2xl">
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 size-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+      {/* Contextual Welcome Hero with Liquid Glass */}
+      <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-emerald-950/80 via-[#0B2516]/85 to-forest-950/90 p-6 sm:p-8 backdrop-blur-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]">
+        {/* Specular Top Rim */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-emerald-700/80 px-3 py-1 text-xs font-bold text-emerald-200 border border-emerald-500/30">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/30">
                 Sunday, 22 November 2026
               </span>
               <button
                 onClick={handleAudioSummary}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 px-3 py-1 text-xs font-bold text-amber-300 border border-white/15 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1 text-xs font-bold text-amber-300 border border-amber-500/30 transition cursor-pointer backdrop-blur-md"
               >
                 <Volume2 className="size-3.5" />
                 <span>{locale === "hi" || locale === "cghi" ? "डैशबोर्ड सारांश सुनें" : "Listen Summary"}</span>
               </button>
             </div>
 
-            <h2 className="mt-3 text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-display leading-tight">
               {t("dashboard.welcome")}, {d.farmer_name}
-            </h2>
-            <p className="mt-1 text-sm text-emerald-200 font-medium">
-              Farmer ID: <strong>{d.farmer_id_code}</strong> · {d.village}, {d.district} (C.G.) · 2.0 Acres Paddy
+            </h1>
+            <p className="text-xs sm:text-sm text-emerald-300/80 font-mono">
+              Farmer ID: <strong className="text-white">{d.farmer_id_code}</strong> · {d.village}, {d.district} (C.G.) · 2.0 Acres Paddy
             </p>
           </div>
 
-          {/* Profile Completion Dial */}
-          <div className="rounded-2xl bg-white/10 p-4 border border-white/15 backdrop-blur-md sm:w-72">
-            <div className="flex items-center justify-between text-xs font-bold">
-              <span>{t("dashboard.profileCompletion")}</span>
-              <span className="text-amber-300 font-black">{d.profile_completion}%</span>
+          {/* Cultivator Identity Bridge Pill */}
+          <div className="shrink-0 flex flex-col sm:items-end gap-2">
+            <div className="rounded-2xl border border-purple-500/30 bg-purple-950/40 px-4 py-2.5 backdrop-blur-md space-y-0.5">
+              <span className="text-[10px] font-mono font-bold uppercase text-purple-300">
+                Cultivator Identity Bridge
+              </span>
+              <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-purple-400 animate-pulse" />
+                Sharecropper (बटाईदार) · 50:50 Oral Lease
+              </p>
+              <p className="text-[10px] text-purple-200/70">Verified by Gram Sabha Resolution</p>
             </div>
-            <div className="mt-2.5 h-2.5 w-full rounded-full bg-white/20 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-500"
-                style={{ width: `${d.profile_completion}%` }}
-              />
-            </div>
-            <p className="mt-2 text-[10px] text-emerald-200/80 font-medium flex items-center gap-1">
-              <CheckCircle2 className="size-3 text-emerald-400" /> Landowner & Paddy crop verified
-            </p>
           </div>
         </div>
       </section>
 
-      {/* 5 Distinct Financial Stage Cards (Golden Rule: Never Sum Together!) */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard
-          label={t("dashboard.potentialBenefits")}
-          value={`₹${d.potential_benefits.toLocaleString("en-IN")}`}
-          detail={t("dashboard.potentialDesc")}
-          icon={<WalletCards className="size-5" />}
-          tone="green"
-        />
-        <StatCard
-          label={t("dashboard.applications")}
-          value={String(d.applications_count)}
-          detail={t("dashboard.appsDesc")}
-          icon={<FileText className="size-5" />}
-          tone="blue"
-        />
-        <StatCard
-          label={t("dashboard.sanctioned")}
-          value={`₹${d.sanctioned_amount.toLocaleString("en-IN")}`}
-          detail={t("dashboard.sanctionedDesc")}
-          icon={<Landmark className="size-5" />}
-          tone="yellow"
-        />
-        <StatCard
-          label={t("dashboard.received")}
-          value={`₹${d.received_amount.toLocaleString("en-IN")}`}
-          detail={t("dashboard.receivedDesc")}
-          icon={<IndianRupee className="size-5" />}
-          tone="green"
-        />
-        <StatCard
-          label={t("dashboard.pendingActions")}
-          value={String(d.pending_actions_count)}
-          detail={t("dashboard.pendingDesc")}
-          icon={<AlertCircle className="size-5" />}
-          tone="red"
-        />
-      </div>
-
-      {/* Main Grid: Schemes & Applications + Side Utilities */}
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          {/* Recommended Schemes */}
-          <Card>
-            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Wheat className="size-5 text-emerald-700" />
-                  {t("dashboard.recommendedSchemes")}
-                </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">{t("dashboard.recSub")}</p>
-              </div>
-              <Link
-                href="/farmer/schemes"
-                className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1"
-              >
-                <span>{t("common.viewAll")}</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {d.recommended_schemes.map((s: any) => (
-                <div
-                  key={s.id}
-                  className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-2xs hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-black text-slate-900">{locale === "hi" || locale === "cghi" ? s.name_hi : s.name}</p>
-                      <StatusBadge status={s.status} />
-                    </div>
-                    <p className="mt-1 text-xs font-medium text-slate-500">{s.type}</p>
-                    <p className="mt-2 text-xs text-slate-600 line-clamp-2">{s.description}</p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-sm font-black text-emerald-800">{s.benefit}</p>
-                    <Link
-                      href={`/farmer/schemes/${s.id}`}
-                      className="text-xs font-bold text-slate-700 hover:text-emerald-800"
-                    >
-                      Details →
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Recent Applications */}
-          <Card>
-            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <ClipboardCheck className="size-5 text-emerald-700" />
-                  {t("dashboard.recentApplications")}
-                </h3>
-              </div>
-              <Link
-                href="/farmer/applications"
-                className="text-xs font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1"
-              >
-                <span>Track All</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </div>
-
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Scheme (योजना)</th>
-                    <th>Reference #</th>
-                    <th>Submitted</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.recent_applications.map((app: any) => (
-                    <tr key={app.id}>
-                      <td className="font-bold text-slate-900">{app.scheme}</td>
-                      <td className="font-mono text-xs text-slate-600">{app.reference}</td>
-                      <td className="text-xs text-slate-500">{app.submitted}</td>
-                      <td>
-                        <StatusBadge status={app.status} />
-                      </td>
-                      <td>
-                        <Link
-                          href={`/farmer/applications/${app.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:underline"
-                        >
-                          View Dossier
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+      {/* Spatial Financial Digital Twin Summary Banner */}
+      <section className="glass-panel p-6 sm:p-7 space-y-5 border border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-4">
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+              Financial Digital Twin · Live Benefit Ledger
+            </span>
+            <h2 className="text-lg font-bold text-white font-display mt-0.5">
+              Consolidated Entitlement & Disbursal Balances
+            </h2>
+          </div>
+          <Link
+            href="/farmer/benefits"
+            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:underline"
+          >
+            <span>Open Granular Ledger</span>
+            <ArrowRight className="size-3.5" />
+          </Link>
         </div>
 
-        {/* Sidebar Utilities: Quick Actions & Recent Activity */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <Card>
-            <h3 className="text-base font-black text-slate-900 mb-3 flex items-center gap-2">
-              <Sparkles className="size-4 text-emerald-700" />
-              {t("dashboard.quickActions")}
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { href: "/farmer/schemes", label: "Find Schemes", icon: Wheat },
-                { href: "/farmer/calculator", label: "Loan & Subsidy", icon: Calculator },
-                { href: "/farmer/eligibility", label: "Check Rules", icon: ClipboardCheck },
-                { href: "/farmer/benefits", label: "Benefit Ledger", icon: WalletCards },
-                { href: "/farmer/grievances/new", label: "Raise Grievance", icon: MessageSquareWarning },
-                { href: "/farmer/ivr", label: "Call IVR Phone", icon: PhoneCall },
-              ].map((btn) => (
-                <Link
-                  key={btn.href}
-                  href={btn.href}
-                  className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white/70 p-3 hover:border-emerald-400 hover:shadow-xs transition"
-                >
-                  <btn.icon className="size-5 text-emerald-800 mb-2" />
-                  <span className="text-xs font-extrabold text-slate-800">{btn.label}</span>
-                </Link>
-              ))}
-            </div>
-          </Card>
+        {/* 6 Lifecycle Buckets (Strictly Separated, Never Conflated) */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6 text-xs">
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-400">1. Potential</span>
+            <p className="text-lg font-extrabold text-emerald-400 font-mono tabular-nums">₹42,500</p>
+            <p className="text-[10px] text-slate-500">System calculated</p>
+          </div>
 
-          {/* Recent Activity Feed */}
-          <Card>
-            <h3 className="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
-              <ShieldCheck className="size-4 text-emerald-700" />
-              {t("dashboard.recentActivity")}
-            </h3>
-            <div className="space-y-4">
-              {d.recent_activities.map((act: any) => (
-                <div key={act.title} className="flex gap-3 text-left">
-                  <span className="mt-1 size-2.5 shrink-0 rounded-full bg-emerald-600 ring-4 ring-emerald-100" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900">{act.title}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{act.detail}</p>
-                  </div>
-                  <span className="ml-auto shrink-0 text-[10px] font-semibold text-slate-400">{act.date}</span>
-                </div>
-              ))}
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-400">2. Applied</span>
+            <p className="text-lg font-extrabold text-slate-200 font-mono tabular-nums">₹36,500</p>
+            <p className="text-[10px] text-slate-500">3 official filings</p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-400">3. Approved</span>
+            <p className="text-lg font-extrabold text-blue-300 font-mono tabular-nums">₹30,000</p>
+            <p className="text-[10px] text-slate-500">Desk verified</p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-400">4. Sanctioned</span>
+            <p className="text-lg font-extrabold text-amber-300 font-mono tabular-nums">₹26,000</p>
+            <p className="text-[10px] text-slate-500">Sanction issued</p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1">
+            <span className="text-[10px] font-mono uppercase text-slate-400">5. Disbursed</span>
+            <p className="text-lg font-extrabold text-teal-300 font-mono tabular-nums">₹24,000</p>
+            <p className="text-[10px] text-slate-500">PFMS released</p>
+          </div>
+
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-1 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+            <span className="text-[10px] font-mono uppercase text-emerald-300 font-bold">6. Received Confirmed</span>
+            <p className="text-lg font-extrabold text-emerald-300 font-mono tabular-nums">₹18,000</p>
+            <p className="text-[10px] text-emerald-400/80">In bank account</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Discrepancy Alert Banner */}
+      <div className="rounded-2xl border border-rose-500/40 bg-gradient-to-r from-rose-950/40 via-rose-900/15 to-transparent p-5 backdrop-blur-xl space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 mt-0.5">
+              <ShieldCheck className="size-5" />
             </div>
-          </Card>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white font-display">
+                  Policy-to-Payment Discrepancy Flagged
+                </h3>
+                <span className="rounded bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-rose-300 border border-rose-500/30">
+                  HIGH SEVERITY
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-rose-200/90 leading-relaxed max-w-3xl">
+                PMFBY claim compensation shows a <b>₹4,000 variance gap</b>: Based on the notified 60% threshold yield loss in Khamtarai village, policy entitlement is ₹12,000, but issued sanction order shows only ₹8,000.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/farmer/benefits/benefit-2"
+            className="inline-flex items-center gap-1.5 shrink-0 rounded-xl bg-rose-500 hover:bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition"
+          >
+            <span>Investigate & Appeal</span>
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Bento Grid: Signature Journey Teaser & Recommended Schemes */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Left Column (8 cols): Recommended Schemes */}
+        <div className="lg:col-span-8 space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-white font-display flex items-center gap-2">
+              <Wheat className="size-4.5 text-emerald-400" />
+              <span>Recommended Schemes for Your Cultivation Profile</span>
+            </h3>
+            <Link href="/farmer/schemes" className="text-xs font-bold text-emerald-400 hover:underline">
+              View All Schemes →
+            </Link>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {d.recommended_schemes.map((sch: any) => (
+              <div
+                key={sch.id}
+                className="glass-card p-5 flex flex-col justify-between hover:border-emerald-500/40 transition group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="rounded bg-white/5 border border-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-300">
+                      {sch.type}
+                    </span>
+                    <StatusBadge status={sch.status} />
+                  </div>
+                  <h4 className="text-base font-bold text-white group-hover:text-emerald-300 transition">
+                    {locale === "hi" && sch.name_hi ? sch.name_hi : sch.name}
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">{sch.description}</p>
+                  
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-xs text-emerald-300 font-semibold">
+                    <span>Entitlement: </span>
+                    <strong className="text-white font-mono">{sch.benefit}</strong>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/[0.06] mt-4 flex items-center justify-between text-xs">
+                  <Link
+                    href={`/farmer/schemes/${sch.id}`}
+                    className="font-bold text-emerald-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>Scheme Dossier</span>
+                    <ArrowRight className="size-3" />
+                  </Link>
+
+                  <Link
+                    href={`/farmer/eligibility?scheme=${sch.id}`}
+                    className="rounded-lg bg-white/10 hover:bg-white/20 px-3 py-1 font-semibold text-white transition"
+                  >
+                    Check Rules
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column (4 cols): Quick Workbenches & Applications */}
+        <div className="lg:col-span-4 space-y-5">
+          <h3 className="text-base font-bold text-white font-display">Recent Applications</h3>
+
+          <div className="space-y-3">
+            {d.recent_applications.map((app: any) => (
+              <div
+                key={app.id}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-4 space-y-2 hover:border-white/25 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-white">{app.scheme}</p>
+                  <StatusBadge status={app.status} />
+                </div>
+                <p className="text-[11px] font-mono text-slate-400">Ref: {app.reference}</p>
+                <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500">Submitted: {app.submitted}</span>
+                  <Link
+                    href={`/farmer/applications/${app.id}`}
+                    className="font-bold text-emerald-400 hover:underline"
+                  >
+                    Details →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Direct IVR Hotline Card */}
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-900/15 to-transparent p-5 backdrop-blur-xl space-y-2">
+            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase tracking-wide">
+              <PhoneCall className="size-4 text-amber-400" />
+              <span>Basic Phone IVR Service</span>
+            </div>
+            <p className="text-xs text-amber-200/80 leading-relaxed">
+              No internet required. Farmers can dial toll-free 1800-890-SETU from any basic keypad mobile.
+            </p>
+            <Link
+              href="/farmer/ivr"
+              className="mt-2 block w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs text-center shadow-md transition"
+            >
+              Open Interactive Simulator
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/context";
+import { AmbientBackground } from "@/components/ambient-background";
 
 export const metadata: Metadata = {
   title: "KrishiSetu | Agricultural Entitlement Intelligence & Benefit Transparency",
@@ -25,12 +26,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen selection:bg-emerald-100 selection:text-emerald-900">
-        <I18nProvider>{children}</I18nProvider>
+      <body className="min-h-screen bg-[#0A140E] text-slate-100 antialiased font-sans selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative">
+        {/* Cinematic Environmental Background */}
+        <AmbientBackground />
+        
+        {/* Main Application Content */}
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <I18nProvider>{children}</I18nProvider>
+        </div>
       </body>
     </html>
   );

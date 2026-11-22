@@ -12,12 +12,12 @@ import {
   VolumeX,
 } from "lucide-react";
 import React, { useState } from "react";
-import { Card, PageHeading } from "@/components/ui-kit";
+import { Card, PageHeading, VoiceAssistButton } from "@/components/ui-kit";
 import { useTranslation } from "@/lib/i18n/context";
 import { processIvrKey } from "@/lib/api";
 
 export default function IvrPage() {
-  const { t, locale, speak, stopSpeaking, isSpeaking } = useTranslation();
+  const { t, locale, speak, stopSpeaking, isSpeaking, language } = useTranslation();
 
   const [callActive, setCallActive] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<string>(
@@ -25,7 +25,6 @@ export default function IvrPage() {
   );
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [callDuration, setCallDuration] = useState(0);
 
   // Play audio beep for DTMF keypress
   const playBeep = () => {
@@ -107,26 +106,30 @@ export default function IvrPage() {
     <div className="space-y-6">
       <PageHeading
         title={t("ivr.title")}
-        description={t("ivr.sub")}
+        description={
+          language === "hi"
+            ? "बिना इंटरनेट या स्मार्टफोन के साधारण कीपैड मोबाइल फोन से डीटीएमएफ नंबर दबाकर जानकारी प्राप्त करें।"
+            : "Accessible telephone DTMF keypad interface for rural farmers with zero internet connectivity or basic keypad phones."
+        }
         action={
-          <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 text-xs font-black flex items-center gap-1.5 shadow-2xs">
-            <PhoneCall className="size-3.5 text-amber-700" /> Toll-Free Simulator: 1800-890-SETU
+          <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3.5 py-1 text-xs font-mono font-bold flex items-center gap-1.5 shadow-sm">
+            <PhoneCall className="size-3.5 text-amber-400" /> Toll-Free Simulator: 1800-890-SETU
           </span>
         }
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        {/* Left Column: Menu Guide and Accessibility Specifications */}
+        {/* Left Column: Menu Structure */}
         <div className="space-y-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+          <div className="glass-panel p-6 space-y-4 border border-white/10">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
               <div>
-                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Phone className="size-5 text-emerald-700" />
+                <h3 className="text-base font-bold text-white flex items-center gap-2 font-display">
+                  <Phone className="size-5 text-emerald-400" />
                   DTMF Interactive Keypad Menu Structure
                 </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Queries the exact same backend and database records as the farmer web portal.
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Connected directly to the deterministic rules engine and benefit ledger.
                 </p>
               </div>
             </div>
@@ -145,68 +148,61 @@ export default function IvrPage() {
                     <tr
                       key={row.key}
                       onClick={() => handleKeyPress(row.key)}
-                      className="cursor-pointer hover:bg-emerald-50/50 transition"
+                      className="cursor-pointer hover:bg-white/[0.04] transition"
                     >
-                      <td className="text-center font-mono font-black text-base text-emerald-800">
-                        <span className="inline-grid size-8 place-items-center rounded-xl bg-emerald-100/80 border border-emerald-300/80">
+                      <td className="text-center font-mono font-extrabold text-base text-emerald-400">
+                        <span className="inline-grid size-8 place-items-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
                           {row.key}
                         </span>
                       </td>
                       <td>
-                        <p className="font-bold text-slate-900">
+                        <p className="font-bold text-white">
                           {locale === "hi" || locale === "cghi" ? row.service_hi : row.service}
                         </p>
-                        <p className="text-[11px] text-slate-500">{row.service}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">{row.service}</p>
                       </td>
-                      <td className="text-xs text-slate-600 font-medium">{row.detail}</td>
+                      <td className="text-xs text-slate-300">{row.detail}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </Card>
-
-          {/* Telephony Architecture Information Card */}
-          <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-emerald-900 font-black text-sm">
-              <ShieldCheck className="size-5 text-emerald-700" /> Unified Backend Telephony Architecture
-            </div>
-            <p className="text-xs text-emerald-950/80 font-medium leading-relaxed">
-              In production, KrishiSetu connects via an Exotel / Twilio voice gateway. The farmer dials <strong>1800-890-SETU</strong> from any feature phone. The caller ID maps to their unique Farmer ID (KS-CG-10482), retrieving verified ledger data without requiring smartphone logins or app downloads.
-            </p>
           </div>
         </div>
 
-        {/* Right Column: Realistic Phone Dialpad Mockup */}
-        <div>
-          <div className="relative mx-auto w-full max-w-xs rounded-[40px] border-4 border-slate-800 bg-slate-950 p-5 shadow-2xl text-white">
-            {/* Phone Speaker Notch */}
-            <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-slate-700" />
-
-            {/* Simulated Call Screen */}
-            <div className="rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 p-4 border border-slate-800 text-center space-y-2">
-              <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+        {/* Right Column: Tactile Liquid Glass Phone Simulator */}
+        <div className="space-y-4">
+          <div className="glass-panel p-6 border border-white/20 shadow-2xl relative overflow-hidden rounded-3xl">
+            {/* Phone Screen Display */}
+            <div className="rounded-2xl border border-white/15 bg-black/60 p-4 space-y-3 backdrop-blur-xl">
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 border-b border-white/10 pb-2">
                 <span>1800-890-SETU</span>
-                <span className={`flex items-center gap-1 font-bold ${callActive ? "text-emerald-400" : "text-slate-500"}`}>
-                  <span className={`size-2 rounded-full ${callActive ? "bg-emerald-500 animate-pulse" : "bg-slate-600"}`} />
-                  {callActive ? "CALL ACTIVE" : "STANDBY"}
+                <span className={callActive ? "text-emerald-400 font-bold flex items-center gap-1" : "text-slate-500"}>
+                  {callActive && <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />}
+                  {callActive ? "CALL IN PROGRESS" : "STANDBY"}
                 </span>
               </div>
 
-              <p className="text-xs font-black text-amber-300">KrishiSetu Voice Gateway</p>
-              <p className="text-[11px] text-slate-300 font-medium line-clamp-3 min-h-12 bg-slate-900/90 rounded-lg p-2 border border-slate-800">
+              {/* Dynamic Telephony Prompt Text */}
+              <div className="min-h-[110px] text-xs leading-relaxed text-slate-200">
                 {currentPrompt}
-              </p>
+              </div>
 
               {isSpeaking && (
-                <div className="flex items-center justify-center gap-1 text-[10px] text-emerald-400 animate-pulse">
-                  <Volume2 className="size-3" /> Voice Synthesizer Playing...
+                <div className="flex items-center justify-center gap-1 py-1">
+                  {[40, 70, 100, 60, 90, 50, 80].map((h, i) => (
+                    <div
+                      key={i}
+                      className="w-1 bg-emerald-400 rounded-full animate-pulse"
+                      style={{ height: `${h * 0.18}px`, animationDelay: `${i * 120}ms` }}
+                    />
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* DTMF Keypad Grid */}
-            <div className="my-5 grid grid-cols-3 gap-3 px-2">
+            {/* Keypad Dial Grid (1-9, *, 0, #) */}
+            <div className="grid grid-cols-3 gap-3 pt-5">
               {[
                 { k: "1", sub: "" },
                 { k: "2", sub: "ABC" },
@@ -224,39 +220,38 @@ export default function IvrPage() {
                 <button
                   key={btn.k}
                   onClick={() => handleKeyPress(btn.k)}
-                  className={`flex aspect-square flex-col items-center justify-center rounded-full border transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center py-3 rounded-2xl border transition-all cursor-pointer ${
                     selectedKey === btn.k
-                      ? "border-emerald-400 bg-emerald-800 text-white shadow-lg scale-95"
-                      : "border-slate-800 bg-slate-900/90 hover:bg-slate-800 text-white hover:border-slate-700"
+                      ? "border-emerald-400 bg-emerald-500/30 text-white scale-95 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                      : "border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/10 hover:border-white/25 active:scale-95"
                   }`}
                 >
                   <span className="text-xl font-bold font-mono leading-none">{btn.k}</span>
-                  {btn.sub && <span className="text-[8px] text-slate-400 tracking-widest">{btn.sub}</span>}
+                  {btn.sub && <span className="text-[9px] text-slate-400 font-mono mt-1">{btn.sub}</span>}
                 </button>
               ))}
             </div>
 
-            {/* Call Control Buttons */}
-            <div className="flex items-center justify-center gap-4 pt-1 pb-2">
+            {/* Call / End Call Buttons */}
+            <div className="pt-5 flex gap-3">
               {!callActive ? (
                 <button
                   onClick={handleStartCall}
-                  className="flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 px-6 py-3 font-black text-xs text-white shadow-lg shadow-emerald-900/40 transition cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 transition cursor-pointer"
                 >
-                  <Phone className="size-4" /> Start Demo Call
+                  <PhoneCall className="size-4" />
+                  <span>Start Demo Call</span>
                 </button>
               ) : (
                 <button
                   onClick={handleHangup}
-                  className="flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-500 px-6 py-3 font-black text-xs text-white shadow-lg shadow-red-900/40 transition cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-lg shadow-rose-500/25 transition cursor-pointer"
                 >
-                  <PhoneOff className="size-4" /> End Call
+                  <PhoneOff className="size-4" />
+                  <span>End Call</span>
                 </button>
               )}
             </div>
-
-            {/* Phone Home Bar */}
-            <div className="mx-auto mt-3 h-1 w-24 rounded-full bg-slate-700" />
           </div>
         </div>
       </div>

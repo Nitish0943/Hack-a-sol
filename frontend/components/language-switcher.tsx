@@ -28,30 +28,30 @@ export function LanguageSwitcher({ showAudioPill = true }: { showAudioPill?: boo
         <button
           onClick={handleAudioSample}
           title={isSpeaking ? t("common.stopAssist") : t("common.sunoAssist")}
-          className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-sm ${
+          className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all backdrop-blur-md cursor-pointer ${
             isSpeaking
-              ? "bg-amber-100 text-amber-900 border border-amber-300 animate-pulse"
-              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200"
+              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+              : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/25"
           }`}
         >
-          {isSpeaking ? <VolumeX className="size-3.5 text-amber-700" /> : <Volume2 className="size-3.5 text-emerald-700" />}
+          {isSpeaking ? <VolumeX className="size-3.5 text-amber-400" /> : <Volume2 className="size-3.5 text-emerald-400" />}
           <span>{isSpeaking ? t("common.stopAssist") : t("common.sunoAssist")}</span>
         </button>
       )}
 
       <div className="relative inline-flex items-center">
         <span className="absolute left-2.5 pointer-events-none text-slate-400">
-          <Globe className="size-3.5" />
+          <Globe className="size-3.5 text-emerald-400" />
         </span>
         <select
           value={locale}
           onChange={(e) => setLocale(e.target.value as Locale)}
           aria-label="Select Language"
-          className="pl-8 pr-7 py-1.5 text-xs font-semibold rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/80 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 shadow-xs cursor-pointer hover:bg-white"
+          className="pl-8 pr-7 py-1.5 text-xs font-semibold rounded-xl bg-[#0F2618]/80 backdrop-blur-md border border-white/15 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 shadow-sm cursor-pointer hover:border-white/30"
         >
-          <option value="hi">हिन्दी (Hindi)</option>
-          <option value="cghi">छत्तीसगढ़ी (C.G.)</option>
-          <option value="en">English</option>
+          <option value="hi" className="bg-[#07130B] text-slate-100">हिन्दी (Hindi)</option>
+          <option value="cghi" className="bg-[#07130B] text-slate-100">छत्तीसगढ़ी (C.G.)</option>
+          <option value="en" className="bg-[#07130B] text-slate-100">English</option>
         </select>
       </div>
     </div>

@@ -15,9 +15,11 @@ import {
   ShieldCheck,
   Volume2,
   WalletCards,
+  ArrowRight,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+import { BenefitJourneyVisualizer, JourneyStage } from "@/components/benefit-journey";
 import { useTranslation } from "@/lib/i18n/context";
 import { getBenefits } from "@/lib/api";
 
@@ -37,8 +39,8 @@ export default function BenefitDetailPage() {
   if (!benefit) {
     return (
       <div className="py-20 text-center">
-        <div className="inline-block size-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-        <p className="mt-3 text-sm text-slate-500 font-semibold">{t("common.loading")}</p>
+        <div className="inline-block size-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+        <p className="mt-3 text-sm text-slate-400 font-semibold">{t("common.loading")}</p>
       </div>
     );
   }
@@ -46,27 +48,161 @@ export default function BenefitDetailPage() {
   const isMismatch = benefit.sanctioned_amount > 0 && benefit.sanctioned_amount < benefit.estimated_amount;
   const variance = benefit.estimated_amount - benefit.sanctioned_amount;
 
-  const timelineSteps = [
-    { title: "Eligibility Identified", date: "10 Nov 2026", done: true, detail: "Farmer profile matched policy rules." },
-    { title: "Claim / Application Submitted", date: "12 Nov 2026", done: true, detail: "Application recorded in system." },
-    { title: "Application Approved", date: "16 Nov 2026", done: true, detail: "Officer verification cleared." },
+  // Build the 8 stages for this specific benefit
+  const stages: JourneyStage[] = [
     {
-      title: isMismatch ? "Sanction Order Issued (Variance Flagged)" : "Sanction Order Issued",
-      date: "18 Nov 2026",
-      done: benefit.sanctioned_amount > 0,
-      alert: isMismatch,
-      detail: isMismatch ? `Sanctioned at ₹${benefit.sanctioned_amount.toLocaleString("en-IN")} (Expected ₹${benefit.estimated_amount.toLocaleString("en-IN")})` : "Sanction order authorized.",
+      id: "stage-1",
+      name: "Potentially Eligible",
+      name_hi: "संभावित पात्र",
+      status: "completed",
+      amount: benefit.estimated_amount,
+      amountLabel: "Estimated Entitlement",
+      amountLabel_hi: "अनुमानित पात्रता",
+      attribution: "System-calculated",
+      date: "10 Oct 2026",
+      policyCitation: "PMFBY Operational Guidelines Para 4.1",
+      explanation: "Farmer profile satisfied location, crop (Paddy), and notified insurance unit conditions.",
+      explanation_hi: "किसान प्रोफ़ाइल ने स्थान, धान की फसल और अधिसूचित बीमा इकाई मानकों को पूर्ण किया।",
+      recommendedAction: "Prepare required sowing certificate and land records.",
+      recommendedAction_hi: "फसल बुवाई प्रमाण पत्र और भू-अभिलेख तैयार करें।",
     },
-    { title: "Disbursement Release (PFMS)", date: "20 Nov 2026", done: benefit.disbursed_amount > 0, detail: "Treasury payment batch processing." },
-    { title: "Confirmed Bank Credit", date: "22 Nov 2026", done: benefit.received_amount > 0, detail: "DBT verified into bank account." },
+    {
+      id: "stage-2",
+      name: "Application Prepared",
+      name_hi: "आवेदन तैयार",
+      status: "completed",
+      amountLabel: "Dossier Status",
+      amountLabel_hi: "दस्तावेज़ स्थिति",
+      attribution: "Farmer-reported",
+      date: "04 Nov 2026",
+      referenceNumber: "FORM-CG-PMFBY-2026",
+      evidenceDocument: "Khasra B1 & Sowing Declaration",
+      explanation: "Dossier assembled with verified Khasra 142/2 and crop sowing declaration.",
+      explanation_hi: "खसरा 142/2 और फसल बुवाई स्व-घोषणा के साथ आवेदन तैयार किया गया।",
+      recommendedAction: "Submit dossier to PACS Samiti or Lok Seva Kendra.",
+      recommendedAction_hi: "आवेदन पैक्स समिति या लोक सेवा केंद्र में जमा करें।",
+    },
+    {
+      id: "stage-3",
+      name: "Submitted",
+      name_hi: "आवेदन प्रस्तुत",
+      status: "completed",
+      amount: benefit.applied_amount,
+      amountLabel: "Claim Amount Filed",
+      amountLabel_hi: "दावा की गई राशि",
+      attribution: "Officially verified",
+      date: "08 Nov 2026",
+      referenceNumber: "CG-PMFBY-8821",
+      evidenceDocument: "PACS Acknowledgment Receipt",
+      explanation: "Official application registered in National Crop Insurance Portal.",
+      explanation_hi: "राष्ट्रीय फसल बीमा पोर्टल में आधिकारिक पावती दर्ज हुई।",
+      recommendedAction: "Await joint crop damage field survey.",
+      recommendedAction_hi: "संयुक्त फसल क्षति सर्वेक्षण की प्रतीक्षा करें।",
+    },
+    {
+      id: "stage-4",
+      name: "Field Verification",
+      name_hi: "क्षेत्रीय सत्यापन",
+      status: "completed",
+      amountLabel: "Survey Finding",
+      amountLabel_hi: "सर्वेक्षण रिपोर्ट",
+      attribution: "Officer-reviewed",
+      date: "14 Nov 2026",
+      evidenceDocument: "Joint Survey Report & CCE Yield Sheet",
+      explanation: "RAEO and Insurance Surveyor recorded 60% threshold yield loss in Khamtarai.",
+      explanation_hi: "ग्रामीण कृषि विस्तार अधिकारी और बीमा सर्वेक्षक द्वारा 60% फसल क्षति प्रमाणित।",
+      recommendedAction: "Survey report uploaded to claims clearinghouse.",
+      recommendedAction_hi: "सर्वेक्षण रिपोर्ट दावा डेस्क को प्रेषित की गई।",
+    },
+    {
+      id: "stage-5",
+      name: "Approved",
+      name_hi: "स्वीकृत",
+      status: "completed",
+      amount: benefit.approved_amount,
+      amountLabel: "Desk Approved Amount",
+      amountLabel_hi: "स्वीकृत राशि",
+      attribution: "Officer-reviewed",
+      date: "16 Nov 2026",
+      referenceNumber: "APR-2026-9921",
+      explanation: "District Agriculture Level Committee cleared claim entitlement of ₹12,000.",
+      explanation_hi: "जिला कृषि समिति द्वारा ₹12,000 की पूर्ण पात्रता स्वीकृत की गई।",
+      recommendedAction: "Transmitted to insurer for sanction order issuance.",
+      recommendedAction_hi: "बीमा कंपनी को स्वीकृति आदेश जारी करने हेतु भेजा गया।",
+    },
+    {
+      id: "stage-6",
+      name: "Sanctioned",
+      name_hi: "स्वीकृति आदेश जारी",
+      status: isMismatch ? "discrepancy" : "completed",
+      amount: benefit.sanctioned_amount,
+      amountLabel: "Official Sanction Order",
+      amountLabel_hi: "स्वीकृति आदेश राशि",
+      attribution: "Officially verified",
+      date: "18 Nov 2026",
+      referenceNumber: "SANC-AIC-88412",
+      evidenceDocument: "Sanction Letter No. AIC/CG/2026/88412",
+      blocker: isMismatch
+        ? `Sanction order issued for ₹${benefit.sanctioned_amount.toLocaleString()} instead of approved ₹${benefit.estimated_amount.toLocaleString()} (Discrepancy gap of ₹${variance.toLocaleString()}).`
+        : undefined,
+      explanation: isMismatch
+        ? "Automated Policy-to-Payment Engine flagged a variance: Insurer sanction under-calculated the notified threshold loss by ₹4,000."
+        : "Sanction order authorized for payment release.",
+      explanation_hi: isMismatch
+        ? "नीति-से-भुगतान सत्यनिष्ठा इंजन द्वारा ₹4,000 की कमी पाई गई। बीमा कंपनी ने स्वीकृत से कम राशि का आदेश जारी किया।"
+        : "स्वीकृति आदेश अधिकृत किया गया।",
+      recommendedAction: isMismatch ? "Raise official grievance for claim recalculation." : "Proceed to disbursement batch.",
+      recommendedAction_hi: isMismatch ? "राशि सुधार हेतु आधिकारिक शिकायत दर्ज करें।" : "भुगतान बैच की प्रतीक्षा करें।",
+    },
+    {
+      id: "stage-7",
+      name: "Disbursed",
+      name_hi: "भुगतान प्रेषित",
+      status: benefit.disbursed_amount > 0 ? "completed" : "current",
+      amount: benefit.disbursed_amount,
+      amountLabel: "Treasury Disbursed",
+      amountLabel_hi: "कोषालय द्वारा प्रेषित",
+      attribution: "System-calculated",
+      date: benefit.disbursed_amount > 0 ? "20 Nov 2026" : "Pending Treasury Batch",
+      referenceNumber: "PFMS-CG-BATCH-4412",
+      explanation: benefit.disbursed_amount > 0
+        ? "Direct Benefit Transfer release batch generated on Public Financial Management System."
+        : "Sanction order queued in PFMS payment file creation.",
+      explanation_hi: benefit.disbursed_amount > 0
+        ? "पीएफएमएस पोर्टल पर डीबीटी भुगतान बैच तैयार किया गया।"
+        : "पीएफएमएस भुगतान बैच का सृजन लंबित है।",
+      recommendedAction: "Monitor bank Aadhaar-NPCI credit.",
+      recommendedAction_hi: "बैंक खाते में आधार डीबीटी क्रेडिट की निगरानी करें।",
+    },
+    {
+      id: "stage-8",
+      name: "Received Confirmed",
+      name_hi: "बैंक खाते में प्राप्त",
+      status: benefit.received_amount > 0 ? "completed" : "upcoming",
+      amount: benefit.received_amount,
+      amountLabel: "Bank Confirmed Received",
+      amountLabel_hi: "बैंक खाते में जमा राशि",
+      attribution: "Officially verified",
+      date: benefit.received_amount > 0 ? "22 Nov 2026" : "Awaiting Bank Credit",
+      referenceNumber: "UTR-SBIN-88941245",
+      explanation: benefit.received_amount > 0
+        ? "Confirmed credited into Aadhaar-seeded bank account."
+        : "Awaiting final NPCI clearing and SMS confirmation.",
+      explanation_hi: benefit.received_amount > 0
+        ? "आधार से जुड़े बैंक खाते में राशि सफलतापूर्वक जमा हुई।"
+        : "अंतिम बैंक क्लीयरिंग और एसएमएस पुष्टि प्रतीक्षित है।",
+      recommendedAction: "Download tax/ledger receipt for tax and revenue records.",
+      recommendedAction_hi: "राजस्व अभिलेख हेतु पावती रसीद डाउनलोड करें।",
+    },
   ];
 
   return (
     <div className="space-y-6">
+      {/* Back button and status */}
       <div className="flex items-center justify-between">
         <Link
           href="/farmer/benefits"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-800 transition"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition"
         >
           <ArrowLeft className="size-4" /> Back to My Benefits Ledger
         </Link>
@@ -78,136 +214,50 @@ export default function BenefitDetailPage() {
         description={`Benefit Ledger Record #${benefit.id} · Financial Year ${benefit.financial_year} · ${benefit.installment_info}`}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          {/* Amount Breakdown Card */}
-          <Card elevated={true} className="p-6">
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-              <IndianRupee className="size-5 text-emerald-700" />
-              Lifecycle Valuation Stages
-            </h3>
+      {/* Signature Feature: Interactive 8-Stage Benefit Journey */}
+      <BenefitJourneyVisualizer
+        schemeName={benefit.scheme_name}
+        schemeCode={benefit.scheme_id.toUpperCase()}
+        currentStageIndex={isMismatch ? 5 : 6}
+        stages={stages}
+      />
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-xl border border-slate-200/80 bg-white/70 p-3.5 shadow-2xs">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimated</p>
-                <p className="mt-1 text-xl font-black text-slate-900 font-mono">
-                  ₹{benefit.estimated_amount.toLocaleString("en-IN")}
-                </p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Policy Entitlement</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200/80 bg-white/70 p-3.5 shadow-2xs">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Approved</p>
-                <p className="mt-1 text-xl font-black text-slate-900 font-mono">
-                  ₹{benefit.approved_amount.toLocaleString("en-IN")}
-                </p>
-                <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">Officer Cleared</p>
-              </div>
-
-              <div
-                className={`rounded-xl border p-3.5 shadow-2xs ${
-                  isMismatch
-                    ? "border-amber-300 bg-amber-50/70"
-                    : "border-slate-200/80 bg-white/70"
-                }`}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sanctioned</p>
-                <p className="mt-1 text-xl font-black text-amber-900 font-mono">
-                  ₹{benefit.sanctioned_amount.toLocaleString("en-IN")}
-                </p>
-                <p className="text-[10px] text-amber-800 font-medium mt-0.5">Sanction Order</p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200/80 bg-white/70 p-3.5 shadow-2xs">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Received</p>
-                <p className="mt-1 text-xl font-black text-emerald-800 font-mono">
-                  ₹{benefit.received_amount.toLocaleString("en-IN")}
-                </p>
-                <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">Bank Credit</p>
-              </div>
+      {/* Discrepancy Alert & Grievance Actions */}
+      {isMismatch && (
+        <div className="rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-950/40 via-rose-900/15 to-transparent p-6 backdrop-blur-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
+              <AlertTriangle className="size-5 text-rose-400" />
+              <span>Policy Discrepancy Detected by Integrity Engine</span>
             </div>
-          </Card>
+            <span className="rounded bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-rose-300 border border-rose-500/30">
+              AUDIT ACTIVE
+            </span>
+          </div>
 
-          {/* Interactive Lifecycle Timeline */}
-          <Card className="p-6">
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
-              <Clock className="size-5 text-emerald-700" />
-              {t("benefits.timelineTitle")}
-            </h3>
+          <p className="text-xs text-rose-200/90 leading-relaxed max-w-3xl">
+            Our Policy-to-Payment Integrity Engine identified a <b>₹{variance.toLocaleString()} variance gap</b> between the statutory policy entitlement formula (₹{benefit.estimated_amount.toLocaleString()}) and the issued sanction order (₹{benefit.sanctioned_amount.toLocaleString()}).
+          </p>
 
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
-              {timelineSteps.map((step, idx) => (
-                <div key={idx} className="relative flex items-start gap-3">
-                  <span
-                    className={`absolute -left-6 top-1 size-5 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black ${
-                      step.alert
-                        ? "bg-amber-500 text-white"
-                        : step.done
-                          ? "bg-emerald-600 text-white"
-                          : "bg-slate-300 text-slate-600"
-                    }`}
-                  >
-                    {step.done ? "✓" : idx + 1}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs sm:text-sm font-extrabold text-slate-900">{step.title}</p>
-                      <span className="text-[10px] text-slate-400 font-medium">{step.date}</span>
-                    </div>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">{step.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            <Link
+              href={`/farmer/grievances/new?scheme=${benefit.scheme_id}&variance=${variance}`}
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-500 hover:bg-rose-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition"
+            >
+              <MessageSquareWarning className="size-4" />
+              <span>File Official Grievance Ticket →</span>
+            </Link>
+
+            <Link
+              href="/farmer/applications/app-2"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-slate-200 transition"
+            >
+              <FileText className="size-4" />
+              <span>Inspect Application Dossier</span>
+            </Link>
+          </div>
         </div>
-
-        {/* Sidebar: Integrity Alert & Grievance Actions */}
-        <div className="space-y-5">
-          {isMismatch && (
-            <div className="rounded-2xl border border-amber-300 bg-amber-50/80 p-5 shadow-xs">
-              <div className="flex items-center gap-2 text-amber-900 font-black text-sm">
-                <AlertTriangle className="size-5 text-amber-700" /> Policy Discrepancy Detected
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-amber-900 font-medium">
-                Our Policy-to-Payment Integrity Engine identified a <strong>₹{variance.toLocaleString("en-IN")} variance</strong> between the policy entitlement formula and the issued sanction order.
-              </p>
-              <div className="mt-3 rounded-xl bg-white/70 p-3 text-[11px] text-amber-950 font-medium border border-amber-200/60">
-                Policy Rule: Expected ₹{benefit.estimated_amount.toLocaleString("en-IN")}, but sanction order shows ₹{benefit.sanctioned_amount.toLocaleString("en-IN")}.
-              </div>
-
-              <Link
-                href={`/farmer/grievances/new?scheme=${benefit.scheme_id}&variance=${variance}`}
-                className="mt-4 block w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs text-center shadow-xs transition cursor-pointer"
-              >
-                Raise Dispute / Grievance →
-              </Link>
-            </div>
-          )}
-
-          <Card className="p-5 space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
-              Related Dossiers & Actions
-            </h4>
-            <div className="space-y-2">
-              <Link
-                href="/farmer/applications/app-2"
-                className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white/60 p-3 text-xs font-bold text-slate-700 hover:border-emerald-300 transition"
-              >
-                <span>View Application Dossier</span>
-                <FileText className="size-4 text-slate-400" />
-              </Link>
-              <Link
-                href="/farmer/ivr"
-                className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white/60 p-3 text-xs font-bold text-slate-700 hover:border-emerald-300 transition"
-              >
-                <span>Check Status via Phone Call</span>
-                <Clock className="size-4 text-slate-400" />
-              </Link>
-            </div>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -13,11 +13,11 @@ import {
   Wheat,
 } from "lucide-react";
 import React, { useState } from "react";
-import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+import { Card, PageHeading, StatusBadge, VoiceAssistButton } from "@/components/ui-kit";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function ProfilePage() {
-  const { t, locale, speak } = useTranslation();
+  const { t, locale, speak, language } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -31,7 +31,7 @@ export default function ProfilePage() {
   const [village, setVillage] = useState("Khamtarai");
   const [pincode, setPincode] = useState("492001");
   const [farmerCat, setFarmerCat] = useState("Small & Marginal");
-  const [cultivatorStatus, setCultivatorStatus] = useState("Landowner");
+  const [cultivatorStatus, setCultivatorStatus] = useState("Sharecropper");
   const [area, setArea] = useState(2.0);
   const [crops, setCrops] = useState("Paddy, Kodo-Kutki");
   const [season, setSeason] = useState("Kharif");
@@ -82,16 +82,17 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <PageHeading
         title={t("nav.profile")}
-        description="Comprehensive personal, location, agricultural and cultivator entitlement records"
+        description={
+          language === "hi"
+            ? "व्यक्तिगत पहचान, काश्तकार वर्गीकरण (बटाईदार/काश्तकार/भू-स्वामी) एवं कृषि रकबा अभिलेख।"
+            : "Comprehensive personal, agrarian profile, and Cultivator Identity Bridge records."
+        }
         action={
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleAudioSummary}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
-            >
-              <Volume2 className="size-3.5" />
-              <span>{locale === "hi" || locale === "cghi" ? "प्रोफ़ाइल सुनें" : "Listen Profile"}</span>
-            </button>
+            <VoiceAssistButton
+              text={`Farmer Profile for ${name}. Village ${village}, ${district}. Cultivator status: ${cultivatorStatus}.`}
+              label={locale === "hi" || locale === "cghi" ? "प्रोफ़ाइल सुनें" : "Listen Profile"}
+            />
             <button
               onClick={() => setEditing(!editing)}
               className="btn-glass text-xs py-2 px-4 cursor-pointer"
@@ -103,8 +104,8 @@ export default function ProfilePage() {
       />
 
       {savedSuccess && (
-        <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 text-xs font-bold flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="size-4 text-emerald-700" />
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-300 text-xs font-bold flex items-center gap-2 backdrop-blur-md">
+          <CheckCircle2 className="size-4 text-emerald-400" />
           <span>Profile changes successfully synchronized with KrishiSetu database.</span>
         </div>
       )}
@@ -112,62 +113,66 @@ export default function ProfilePage() {
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         {/* Profile Card Badge */}
         <div className="space-y-5">
-          <Card className="text-center p-6">
-            <span className="mx-auto grid size-20 place-items-center rounded-3xl bg-gradient-to-br from-emerald-800 to-forest-950 text-2xl font-black text-white shadow-md">
+          <div className="glass-card text-center p-6 space-y-4">
+            <span className="mx-auto grid size-20 place-items-center rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-2xl font-black text-slate-950 shadow-lg border border-white/30">
               RK
             </span>
-            <h3 className="mt-4 font-black text-xl text-slate-900">{name}</h3>
-            <p className="text-xs font-mono font-bold text-emerald-800 mt-0.5">KS-CG-10482</p>
-            <p className="text-xs text-slate-500 font-medium">{village}, {district} (C.G.)</p>
+            <div>
+              <h3 className="font-extrabold text-xl text-white font-display">{name}</h3>
+              <p className="text-xs font-mono font-bold text-emerald-400 mt-0.5">KS-CG-10482</p>
+              <p className="text-xs text-slate-400 font-medium">{village}, {district} (C.G.)</p>
+            </div>
 
-            <div className="mt-5 border-t border-slate-100 pt-4 text-left space-y-3">
+            <div className="border-t border-white/[0.08] pt-4 text-left space-y-3">
               <div>
                 <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-500">{t("dashboard.profileCompletion")}</span>
-                  <span className="text-emerald-800 font-black">85%</span>
+                  <span className="text-slate-400">{t("dashboard.profileCompletion")}</span>
+                  <span className="text-emerald-400 font-mono font-extrabold">85%</span>
                 </div>
-                <div className="mt-1.5 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full w-[85%] rounded-full bg-emerald-600" />
+                <div className="mt-1.5 h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full w-[85%] rounded-full bg-emerald-400 shadow-[0_0_10px_#34D399]" />
                 </div>
               </div>
 
               <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <p className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
                   Verification Status
                 </p>
-                <div className="mt-1">
-                  <StatusBadge status="Verified Landowner" />
+                <div className="mt-1.5">
+                  <StatusBadge status="Gram Sabha Verified" />
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Cultivator Identity Bridge Spotlight */}
-          <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-br from-amber-50 to-orange-50/50 p-5 shadow-xs">
-            <div className="flex items-center gap-2 text-amber-900 font-black text-xs mb-2">
-              <ShieldCheck className="size-4 text-amber-700" /> Cultivator Identity Bridge
+          <div className="rounded-2xl border border-purple-500/30 bg-purple-950/30 p-5 backdrop-blur-md space-y-2">
+            <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wide">
+              <ShieldCheck className="size-4 text-purple-400" />
+              <span>Cultivator Identity Bridge</span>
             </div>
-            <p className="text-xs text-amber-950/80 font-medium leading-relaxed">
+            <p className="text-xs text-purple-200/80 leading-relaxed">
               If you cultivate additional land as a <strong>Sharecropper (बटाईदार)</strong> or have a pending inheritance mutation, you can upload evidence here for extension officer certification.
             </p>
-            <div className="mt-3 flex items-center gap-2 text-xs font-bold text-amber-900">
-              <FileCheck className="size-3.5 text-amber-700" /> Current: {cultivatorStatus}
+            <div className="pt-1 flex items-center gap-2 text-xs font-bold text-white">
+              <FileCheck className="size-3.5 text-purple-400" />
+              <span>Current: {cultivatorStatus}</span>
             </div>
           </div>
         </div>
 
         {/* Detailed Profile Edit Form */}
-        <Card elevated={true} className="p-6 sm:p-8">
+        <div className="glass-panel p-6 sm:p-8 border border-white/10">
           <form onSubmit={handleSave} className="space-y-6">
             {/* 1. Personal Details */}
             <div className="space-y-3">
-              <h4 className="text-sm font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <User className="size-4 text-emerald-700" />
+              <h4 className="text-sm font-bold text-white flex items-center gap-2 border-b border-white/[0.08] pb-2 font-display">
+                <User className="size-4 text-emerald-400" />
                 Personal Details (व्यक्तिगत विवरण)
               </h4>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Full Name *</label>
+                  <label className="text-xs font-semibold text-slate-300">Full Name *</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -176,7 +181,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Registered Mobile *</label>
+                  <label className="text-xs font-semibold text-slate-300">Registered Mobile *</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -185,29 +190,29 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Preferred Language</label>
+                  <label className="text-xs font-semibold text-slate-300">Preferred Language</label>
                   <select
                     disabled={!editing}
-                    className="field mt-1"
+                    className="field mt-1 cursor-pointer"
                     value={preferredLang}
                     onChange={(e) => setPreferredLang(e.target.value)}
                   >
-                    <option value="hi">हिन्दी (Hindi)</option>
-                    <option value="cghi">छत्तीसगढ़ी (Chhattisgarhi)</option>
-                    <option value="en">English</option>
+                    <option value="hi" className="bg-[#07130B]">हिन्दी (Hindi)</option>
+                    <option value="cghi" className="bg-[#07130B]">छत्तीसगढ़ी (Chhattisgarhi)</option>
+                    <option value="en" className="bg-[#07130B]">English</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Farmer Category</label>
+                  <label className="text-xs font-semibold text-slate-300">Farmer Category</label>
                   <select
                     disabled={!editing}
-                    className="field mt-1"
+                    className="field mt-1 cursor-pointer"
                     value={farmerCat}
                     onChange={(e) => setFarmerCat(e.target.value)}
                   >
-                    <option value="Small & Marginal">Small & Marginal (&lt; 5 acres)</option>
-                    <option value="Medium">Medium Farmer (5–10 acres)</option>
-                    <option value="Large">Large Farmer (&gt; 10 acres)</option>
+                    <option value="Small & Marginal" className="bg-[#07130B]">Small & Marginal (&lt; 5 acres)</option>
+                    <option value="Medium" className="bg-[#07130B]">Medium Farmer (5–10 acres)</option>
+                    <option value="Large" className="bg-[#07130B]">Large Farmer (&gt; 10 acres)</option>
                   </select>
                 </div>
               </div>
@@ -215,13 +220,13 @@ export default function ProfilePage() {
 
             {/* 2. Geographic Location */}
             <div className="space-y-3 pt-3">
-              <h4 className="text-sm font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <Wheat className="size-4 text-emerald-700" />
+              <h4 className="text-sm font-bold text-white flex items-center gap-2 border-b border-white/[0.08] pb-2 font-display">
+                <Wheat className="size-4 text-emerald-400" />
                 Location & Administration (स्थान)
               </h4>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">State *</label>
+                  <label className="text-xs font-semibold text-slate-300">State *</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -230,7 +235,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">District *</label>
+                  <label className="text-xs font-semibold text-slate-300">District *</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -239,7 +244,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Block / Tehsil *</label>
+                  <label className="text-xs font-semibold text-slate-300">Block / Tehsil *</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -248,7 +253,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Village / Gram *</label>
+                  <label className="text-xs font-semibold text-slate-300">Village / Gram *</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -257,7 +262,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">PIN Code</label>
+                  <label className="text-xs font-semibold text-slate-300">PIN Code</label>
                   <input
                     disabled={!editing}
                     className="field mt-1"
@@ -268,86 +273,58 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* 3. Agricultural & Cultivator Identity */}
+            {/* 3. Cultivator Identity Bridge */}
             <div className="space-y-3 pt-3">
-              <h4 className="text-sm font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <ShieldCheck className="size-4 text-emerald-700" />
-                Cultivator Identity & Land Metrics (कृषि एवं काश्तकार अधिकार)
+              <h4 className="text-sm font-bold text-white flex items-center gap-2 border-b border-white/[0.08] pb-2 font-display">
+                <ShieldCheck className="size-4 text-purple-400" />
+                Cultivator Identity & Agrarian Status (काश्तकार स्थिति)
               </h4>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Cultivator Status *</label>
+                  <label className="text-xs font-semibold text-slate-300">Cultivator Status *</label>
                   <select
                     disabled={!editing}
-                    className="field mt-1"
+                    className="field mt-1 cursor-pointer"
                     value={cultivatorStatus}
                     onChange={(e) => setCultivatorStatus(e.target.value)}
                   >
-                    <option value="Landowner">Landowner (भूमि स्वामी / पट्टेदार)</option>
-                    <option value="Tenant Farmer">Tenant Farmer (किराएदार काश्तकार)</option>
-                    <option value="Sharecropper">Sharecropper (बटाईदार / अधिया किसान)</option>
-                    <option value="Joint Landholder">Joint Landholder (संयुक्त खातादार)</option>
-                    <option value="Mutation Pending">Land Mutation Pending (नामांतरण लंबित)</option>
+                    <option value="Sharecropper" className="bg-[#07130B]">Sharecropper (बटाईदार / 50:50 Oral Agreement)</option>
+                    <option value="Tenant" className="bg-[#07130B]">Tenant Farmer (पट्टेदार / Leaseholder)</option>
+                    <option value="Landowner" className="bg-[#07130B]">Landowner (भू-स्वामी)</option>
+                    <option value="Joint Owner" className="bg-[#07130B]">Joint Family Landholding</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Cultivated Area (Acres) *</label>
+                  <label className="text-xs font-semibold text-slate-300">Cultivated Area (Acres) *</label>
                   <input
                     disabled={!editing}
-                    className="field mt-1"
+                    className="field mt-1 font-mono"
                     type="number"
                     step="0.1"
                     value={area}
                     onChange={(e) => setArea(Number(e.target.value))}
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700">Primary Crops *</label>
-                  <input
-                    disabled={!editing}
-                    className="field mt-1"
-                    value={crops}
-                    onChange={(e) => setCrops(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700">Farming Season</label>
-                  <select
-                    disabled={!editing}
-                    className="field mt-1"
-                    value={season}
-                    onChange={(e) => setSeason(e.target.value)}
-                  >
-                    <option value="Kharif">Kharif (खरीफ - जून से अक्टूबर)</option>
-                    <option value="Rabi">Rabi (रबी - नवंबर से अप्रैल)</option>
-                    <option value="Zaid">Zaid / Summer (जायद)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700">Irrigation Source</label>
-                  <input
-                    disabled={!editing}
-                    className="field mt-1"
-                    value={irrigation}
-                    onChange={(e) => setIrrigation(e.target.value)}
-                  />
-                </div>
               </div>
             </div>
 
             {editing && (
-              <div className="flex justify-end pt-4 border-t border-slate-100">
+              <div className="pt-4 flex justify-end gap-3">
                 <button
-                  type="submit"
-                  className="btn-primary px-6 py-2.5 text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md"
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="rounded-xl border border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/5"
                 >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary text-xs px-6 py-2.5 shadow-lg">
                   <Save className="size-4" />
-                  <span>Save Profile Updates</span>
+                  <span>Save Profile</span>
                 </button>
               </div>
             )}
           </form>
-        </Card>
+        </div>
       </div>
     </div>
   );
