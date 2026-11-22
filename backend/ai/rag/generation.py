@@ -226,7 +226,7 @@ OFFICIAL POLICY EVIDENCE:
 
 Please generate an accurate, evidence-grounded answer:"""
 
-        # Step 6: Generate through LLM Provider
+        # Step 6: Generate through LLM Provider with automatic offline fallback
         try:
             generated_text = self.provider.generate(
                 prompt=user_prompt,
@@ -234,24 +234,33 @@ Please generate an accurate, evidence-grounded answer:"""
                 temperature=0.0,
             )
         except Exception as exc:
-            logger.error("LLM Generation failed: %s", exc)
-            fallback_msg = (
-                "सरकारी दस्तावेज प्राप्त हुए हैं, किंतु सेवा अनुपलब्ध होने के कारण उत्तर तैयार नहीं हो सका।"
-                if analysis.detected_language == "hi"
-                else "Official policy evidence was retrieved, but response synthesis encountered a provider error."
-            )
-            return {
-                "answer": fallback_msg,
-                "ivr_summary": fallback_msg,
-                "language": analysis.detected_language,
-                "scheme_name": analysis.identified_scheme,
-                "answer_status": "error",
-                "evidence_status": validation.status,
-                "citations": citations,
-                "important_conditions": important_conditions,
-                "verification_required": True,
-                "limitations": [f"Provider error: {type(exc).__name__}"],
-            }
+            logger.warning("Primary LLM provider call failed (%s). Falling back to offline grounded generator.", exc)
+            try:
+                from ai.rag.llm.provider import MockOfflineProvider
+                fallback_provider = MockOfflineProvider()
+                generated_text = fallback_provider.generate(
+                    prompt=user_prompt,
+                    system_prompt=self.SYSTEM_PROMPT,
+                    temperature=0.0,
+                )
+            except Exception:
+                fallback_msg = (
+                    "सरकारी दस्तावेज प्राप्त हुए हैं, किंतु सेवा अनुपलब्ध होने के कारण उत्तर तैयार नहीं हो सका।"
+                    if analysis.detected_language in ["hi", "chg"]
+                    else "Official policy evidence was retrieved, but response synthesis encountered a provider error."
+                )
+                return {
+                    "answer": fallback_msg,
+                    "ivr_summary": fallback_msg,
+                    "language": analysis.detected_language,
+                    "scheme_name": analysis.identified_scheme,
+                    "answer_status": "error",
+                    "evidence_status": validation.status,
+                    "citations": citations,
+                    "important_conditions": important_conditions,
+                    "verification_required": True,
+                    "limitations": [f"Provider error: {type(exc).__name__}"],
+                }
 
         # Step 7: Produce IVR summary if detailed requested, or vice versa
         ivr_summary = self._generate_ivr_summary(generated_text, analysis.detected_language)
