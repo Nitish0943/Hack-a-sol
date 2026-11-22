@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Sprout } from "lucide-react";
+import { ArrowLeft, Sprout, Tractor, ShieldCheck, Settings2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api";
@@ -14,7 +14,27 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("123456");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingRole, setLoadingRole] = useState<"farmer" | "officer" | "admin" | null>(null);
   const router = useRouter();
+
+  async function loginAsDemo(selectedRole: "farmer" | "officer" | "admin") {
+    setError("");
+    setLoadingRole(selectedRole);
+    try {
+      await authApi.demoLogin(selectedRole);
+      router.push(
+        selectedRole === "officer"
+          ? "/officer/dashboard"
+          : selectedRole === "admin"
+            ? "/admin/dashboard"
+            : "/farmer/dashboard",
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not sign in to the demo account.");
+    } finally {
+      setLoadingRole(null);
+    }
+  }
 
   async function continueLogin() {
     setError("");
@@ -47,8 +67,33 @@ export default function LoginPage() {
             <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" /> Back to home</Link>
             <LanguageSwitcher />
           </div>
-          <h1 className="text-3xl font-bold">{step === "phone" ? "Welcome back" : "Verify your number"}</h1>
-          <p className="mt-2 text-sm text-slate-500">{step === "phone" ? "Choose a demo role and enter your mobile number." : "Enter the demo OTP 123456."}</p>
+          <h1 className="text-3xl font-bold">Sign in to KrishiSetu</h1>
+          <p className="mt-2 text-sm text-slate-500">Choose a demo account to open its portal. No details needed.</p>
+          <div className="mt-6 space-y-3">
+            {([
+              ["farmer", "Farmer", "Open the farmer portal", Tractor],
+              ["officer", "Government Officer", "Review applications and cases", ShieldCheck],
+              ["admin", "Administrator", "Manage platform settings", Settings2],
+            ] as const).map(([demoRole, label, description, Icon]) => (
+              <button
+                key={demoRole}
+                type="button"
+                disabled={loadingRole !== null || loading}
+                onClick={() => loginAsDemo(demoRole)}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-green-300 hover:bg-green-50 disabled:opacity-60"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#EAF4EC] text-[#166534]"><Icon className="size-5" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">{loadingRole === demoRole ? "Signing in..." : `Continue as ${label}`}</span>
+                  <span className="block text-xs text-slate-500">{description}</span>
+                </span>
+                <span className="text-[#166534]">→</span>
+              </button>
+            ))}
+          </div>
+          <div className="my-6 flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200" /><span>or use mobile OTP</span><span className="h-px flex-1 bg-slate-200" /></div>
+          <p className="text-sm font-semibold">Sign in with mobile number</p>
+          <p className="mt-1 text-xs text-slate-500">{step === "phone" ? "Demo OTP is 123456." : "Enter the demo OTP 123456."}</p>
           <div className="mt-7 space-y-5">
             {step === "phone" && <div><label className="mb-2 block text-sm font-semibold">Demo role</label><select className="field" value={role} onChange={(event) => setRole(event.target.value)}><option value="farmer">Farmer</option><option value="officer">Government Officer</option><option value="admin">Administrator</option></select></div>}
             {step === "phone" ? <div><label className="mb-2 block text-sm font-semibold">Mobile number</label><div className="flex"><span className="grid place-items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-50 px-3 text-sm">+91</span><input className="field rounded-l-none" type="tel" value={mobileNumber} onChange={(event)=>setMobileNumber(event.target.value)} /></div></div> : <div><label className="mb-2 block text-sm font-semibold">One-time password</label><input className="field text-center text-xl tracking-[0.6em]" inputMode="numeric" value={otp} onChange={(event)=>setOtp(event.target.value)} /></div>}

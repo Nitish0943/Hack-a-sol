@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.db.store import execute
+from app.core.config import Settings
 
 
 def test_demo_otp_login_returns_farmer_profile() -> None:
@@ -125,3 +126,35 @@ def test_registration_rejects_invalid_otp() -> None:
             },
         )
         assert registered.status_code == 401
+
+
+def test_demo_login_creates_session_for_each_portal_role() -> None:
+    with TestClient(app) as client:
+        for role, expected_path in (
+            ("farmer", "/api/v1/farmers/me"),
+            ("officer", "/api/v1/officer/dashboard"),
+            ("admin", "/api/v1/admin/dashboard"),
+        ):
+            login = client.post("/api/v1/auth/demo-login", json={"role": role})
+            assert login.status_code == 200
+            assert login.json()["data"]["user"]["role"] == role
+            token = login.json()["data"]["accessToken"]
+            protected = client.get(
+                expected_path,
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert protected.status_code == 200
+            assert login.json()["data"]["isDemo"] is True
+
+
+def test_demo_login_is_disabled_in_production(monkeypatch) -> None:
+    from app.api.v1 import auth
+
+    monkeypatch.setattr(
+        auth,
+        "get_settings",
+        lambda: Settings(app_environment="production", demo_login_enabled=True),
+    )
+    with TestClient(app) as client:
+        response = client.post("/api/v1/auth/demo-login", json={"role": "admin"})
+    assert response.status_code == 404
