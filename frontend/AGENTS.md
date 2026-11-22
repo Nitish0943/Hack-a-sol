@@ -15,3 +15,29 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Shared components: `components/portal-layout.tsx` and `components/ui-kit.tsx`.
 - Validation: `npm run typecheck` and `npm run build` pass.
 - Remaining integration work: Supabase authentication/data storage, role protection, policy and grievance APIs, document storage, live IVR/SMS and real notification providers.
+
+## Backend implementation status
+
+- Added a FastAPI `/api/v1` demo backend with SQLite persistence.
+- Completed demo OTP login, session cookies, farmer profile/dashboard, schemes, eligibility, loan/subsidy calculations, benefit summaries, applications, grievances, discrepancies, officer/admin actions and simulated IVR endpoints.
+- All demo records are marked `is_demo=true` or explicitly exposed as demo responses.
+- Frontend login now calls the backend demo OTP endpoints through `frontend/lib/api.ts`.
+- Backend verification: `uv run pytest` — 7 tests passed.
+- Frontend verification: `npm run typecheck` and `npm run build` passed.
+- Known gaps: Supabase PostgreSQL/Auth/Storage/RLS are not configured; live IVR, SMS and Gemini integrations are not configured.
+- Next task: replace the SQLite demo adapter with Supabase and implement RLS migration/policies before production use.
+
+## Login connection fix
+
+- Corrected `NEXT_PUBLIC_API_URL` to `http://localhost:8000`; the backend and frontend now use the documented 8000/3000 ports.
+- Restarted Next.js after the environment change.
+- Verified send-OTP, verify-OTP and authenticated profile calls against the live backend.
+
+## Registration integration
+
+- Completed `POST /api/v1/auth/register` with demo OTP verification, duplicate-mobile rejection, unique farmer ID generation and persisted farmer profile fields.
+- Connected `/register` to send OTP and register APIs with loading and error states.
+- Backend verification: `uv run pytest` — 10 tests passed.
+- Frontend verification: `npm run typecheck` passed; `npm run build` passed.
+- Live verification: backend on port `8001`, frontend on port `3000`; status, OTP and `/register` smoke checks passed.
+- Known next task: integrate Supabase credentials and migrations/RLS if provided, or continue frontend data-page integration using the working demo API.
