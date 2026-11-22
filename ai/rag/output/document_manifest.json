@@ -1,0 +1,69 @@
+{
+  "total_registered": 4,
+  "documents": [
+    {
+      "document_id": "pm-kisan-guidelines-revised-2024",
+      "document_title": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Operational Guidelines",
+      "scheme_name": "PM-KISAN",
+      "issuing_department": "Ministry of Agriculture and Farmers Welfare, Government of India",
+      "government_level": "Central",
+      "applicable_state": "All-India",
+      "document_type": "Operational Guidelines",
+      "source_url": "https://pmkisan.gov.in/Documents/OperationalGuidelines.pdf",
+      "publication_date": "2024-01-15",
+      "effective_date": "2018-12-01",
+      "verification_date": "2026-11-23",
+      "local_path": "ai/rag/sample_policies/pm_kisan_operational_guidelines.pdf",
+      "extraction_status": "EXTRACTED",
+      "notes": "Verified from official PM-KISAN portal. Includes complete mandatory exclusion categories and direct benefit transfer rules."
+    },
+    {
+      "document_id": "pmfby-revised-guidelines-2024",
+      "document_title": "Pradhan Mantri Fasal Bima Yojana (PMFBY) Operational Guidelines",
+      "scheme_name": "PMFBY",
+      "issuing_department": "Department of Agriculture and Farmers Welfare, Government of India",
+      "government_level": "Central",
+      "applicable_state": "All-India",
+      "document_type": "Operational Guidelines",
+      "source_url": "https://pmfby.gov.in/pdf/Revised_Operational_Guidelines.pdf",
+      "publication_date": "2024-03-01",
+      "effective_date": "2016-04-01",
+      "verification_date": "2026-11-23",
+      "local_path": "ai/rag/sample_policies/pmfby_operational_guidelines.pdf",
+      "extraction_status": "EXTRACTED",
+      "notes": "Verified from official PMFBY portal. Defines 2.0% Kharif, 1.5% Rabi premium rates and risk exclusions."
+    },
+    {
+      "document_id": "cg-krishak-unnati-yojana-2024",
+      "document_title": "Chhattisgarh Krishak Unnati Yojana Notification and Operational Guidelines",
+      "scheme_name": "Chhattisgarh Krishak Unnati Yojana",
+      "issuing_department": "Department of Agriculture Development and Farmer Welfare, Government of Chhattisgarh",
+      "government_level": "State",
+      "applicable_state": "Chhattisgarh",
+      "document_type": "Notification",
+      "source_url": "https://agriportal.cg.nic.in/schemes/krishak_unnati_yojana.pdf",
+      "publication_date": "2024-03-12",
+      "effective_date": "2024-03-12",
+      "verification_date": "2026-11-23",
+      "local_path": "ai/rag/sample_policies/cg_krishak_unnati_yojana.pdf",
+      "extraction_status": "EXTRACTED",
+      "notes": "Official notification for Chhattisgarh state differential assistance of up to ₹3,100/quintal paddy procurement."
+    },
+    {
+      "document_id": "test-scanned-document-ocr-check",
+      "document_title": "Archived Scanned Agricultural Circular (OCR Verification Fixture)",
+      "scheme_name": "State Agriculture Notification (Archived)",
+      "issuing_department": "Directorate of Agriculture",
+      "government_level": "State",
+      "applicable_state": "Chhattisgarh",
+      "document_type": "Circular",
+      "source_url": "https://agriportal.cg.nic.in/circulars/sample_scan.pdf",
+      "publication_date": null,
+      "effective_date": "unknown",
+      "verification_date": "2026-11-23",
+      "local_path": "ai/rag/sample_policies/scanned_sample_needs_ocr.pdf",
+      "extraction_status": "NEEDS_OCR",
+      "notes": "Synthetic scanned PDF with no extractable text stream to verify automated OCR requirement detection."
+    }
+  ]
+}
