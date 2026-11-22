@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Calculator, CheckCircle2, Landmark, Phone, Search, ShieldCheck, Sprout, WalletCards } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const features = [
   { icon: Search, title: "Smart Scheme Discovery", text: "Find relevant central and Chhattisgarh schemes in one place." },
@@ -13,15 +14,15 @@ const features = [
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#F8FAF5]">
-      <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
+      <nav className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-3 sm:h-20 sm:flex-nowrap sm:px-8 sm:py-0">
         <Link href="/" className="flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-xl bg-[#166534] text-white"><Sprout className="size-6" /></span>
           <div><span className="block text-lg font-bold leading-5">KrishiSetu</span><span className="text-xs text-slate-500">कृषि सेतु</span></div>
         </Link>
         <div className="flex items-center gap-2">
-          <select aria-label="Language" className="hidden rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:block"><option>English</option><option>हिन्दी</option></select>
-          <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700">Log in</Link>
-          <Link href="/register" className="rounded-lg bg-[#166534] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#14532d]">Register</Link>
+          <LanguageSwitcher />
+          <Link href="/login" className="whitespace-nowrap rounded-lg px-1.5 py-2 text-xs font-semibold text-slate-700 sm:px-3 sm:text-sm">Log in</Link>
+          <Link href="/register" className="whitespace-nowrap rounded-lg bg-[#166534] px-2 py-2.5 text-xs font-semibold text-white hover:bg-[#14532d] sm:px-4 sm:text-sm">Register</Link>
         </div>
       </nav>
 

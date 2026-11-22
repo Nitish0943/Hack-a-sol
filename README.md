@@ -77,3 +77,11 @@ uv run pytest
 ```
 
 The SQLite adapter is a hackathon demonstration adapter, not a production Supabase deployment. Supabase, RLS policies, live IVR/SMS, storage and external identity integrations remain to be configured.
+### Languages
+
+The public and portal navigation provides English (default), Hindi, and
+Chhattisgarhi. The farmer settings page uses the same language preference.
+Selections are saved in the browser's `localStorage` and apply without a page
+reload. Translations are maintained in
+[`frontend/lib/i18n/translations.ts`](./frontend/lib/i18n/translations.ts);
+untranslated text falls back to English.

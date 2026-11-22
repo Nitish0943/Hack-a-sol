@@ -5,6 +5,7 @@ import { ArrowLeft, Sprout } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function LoginPage() {
   const [step, setStep] = useState<"phone" | "otp">("phone");
@@ -42,7 +43,10 @@ export default function LoginPage() {
       </section>
       <section className="flex items-center justify-center p-5">
         <div className="w-full max-w-sm">
-          <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" /> Back to home</Link>
+          <div className="mb-8 flex items-center justify-between">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" /> Back to home</Link>
+            <LanguageSwitcher />
+          </div>
           <h1 className="text-3xl font-bold">{step === "phone" ? "Welcome back" : "Verify your number"}</h1>
           <p className="mt-2 text-sm text-slate-500">{step === "phone" ? "Choose a demo role and enter your mobile number." : "Enter the demo OTP 123456."}</p>
           <div className="mt-7 space-y-5">
