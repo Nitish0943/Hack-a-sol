@@ -5,10 +5,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Full-Stack Starter API"
-    app_version: str = "0.1.0"
+    app_name: str = "KrishiSetu API"
+    app_version: str = "1.0.0"
     app_environment: str = "development"
     frontend_origins: str = "http://localhost:3000"
+    demo_otp_enabled: bool = True
+    demo_otp: str = "123456"
+    database_path: str = "./krishisetu.db"
 
     # KrishiSetu AI RAG settings
     gemini_api_key: str = ""

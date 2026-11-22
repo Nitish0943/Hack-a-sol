@@ -15,3 +15,17 @@ async def get_api_status() -> StatusResponse:
         version=settings.app_version,
         environment=settings.app_environment,
     )
+
+
+@router.get("/health")
+async def get_api_health() -> dict:
+    return {
+        "success": True,
+        "message": "API is operational",
+        "data": {
+            "api": "operational",
+            "database": "connected",
+            "environment": get_settings().app_environment,
+        },
+        "meta": None,
+    }

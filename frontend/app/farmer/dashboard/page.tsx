@@ -20,7 +20,7 @@ export default function FarmerDashboard() {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card>
             <div className="mb-4 flex items-center justify-between"><div><h3 className="font-bold">Recommended schemes</h3><p className="mt-1 text-xs text-slate-500">Based on your demo profile</p></div><Link href="/farmer/schemes" className="text-sm font-semibold text-[#166534]">View all</Link></div>
             <div className="grid gap-3 md:grid-cols-3">
