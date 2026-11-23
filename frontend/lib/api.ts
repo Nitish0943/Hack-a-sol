@@ -4,6 +4,9 @@ import type {
   FarmerQueryResponse,
   RAGStatusResponse,
   SchemesListResponse,
+  VoiceCall,
+  VoiceEscalation,
+  VoiceServiceStatus,
 } from "@/types/api";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
@@ -168,5 +171,17 @@ export const authApi = {
     }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+};
+
+export const voiceApi = {
+  status: () => apiRequest<VoiceServiceStatus>("/voice/status"),
+  calls: () => apiRequest<VoiceCall[]>("/voice/calls"),
+  myEscalations: () => apiRequest<VoiceEscalation[]>("/voice/my-escalations"),
+  officerEscalations: () => apiRequest<VoiceEscalation[]>("/voice/officer/escalations"),
+  updateEscalation: (id: string, status: "pending" | "assigned" | "contacted" | "closed") =>
+    apiRequest<{ id: string; status: string }>(`/voice/officer/escalations/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
     }),
 };

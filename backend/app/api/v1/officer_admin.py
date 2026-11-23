@@ -1,4 +1,5 @@
 import secrets
+import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -23,12 +24,30 @@ class SchemeCreate(BaseModel):
     policyVersion: str
 
 
-def audit(actor_id: str, action: str, entity_type: str, entity_id: str, old_values: object | None = None, new_values: object | None = None) -> None:
+def audit(
+    actor_id: str,
+    action: str,
+    entity_type: str,
+    entity_id: str,
+    old_values: object | None = None,
+    new_values: object | None = None,
+    connection: sqlite3.Connection | None = None,
+) -> None:
     import json
-    execute(
-        "INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,old_values,new_values) VALUES(?,?,?,?,?,?,?)",
-        (f"audit-{secrets.token_hex(8)}", actor_id, action, entity_type, entity_id, json.dumps(old_values) if old_values else None, json.dumps(new_values) if new_values else None),
+    values = (
+        f"audit-{secrets.token_hex(8)}",
+        actor_id,
+        action,
+        entity_type,
+        entity_id,
+        json.dumps(old_values) if old_values else None,
+        json.dumps(new_values) if new_values else None,
     )
+    statement = "INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,old_values,new_values) VALUES(?,?,?,?,?,?,?)"
+    if connection is None:
+        execute(statement, values)
+    else:
+        connection.execute(statement, values)
 
 
 @router.get("/officer/dashboard")

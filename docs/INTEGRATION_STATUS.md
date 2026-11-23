@@ -1,6 +1,6 @@
 # KrishiSetu Integration Status
 
-## Last completed task
+## Previous completed tasks
 
 One-click demo login is implemented for all three portals:
 
@@ -19,7 +19,7 @@ The prior completed task connected farmer registration end to end:
 - OTP verification and persisted session creation
 - `/register` loading, error and success states
 
-## Verified
+## Earlier verified baseline (demo login and registration)
 
 - Backend: `uv run pytest` — 12 passed
 - Frontend: `npm run typecheck` — passed
@@ -41,7 +41,7 @@ The prior completed task connected farmer registration end to end:
 - Benefit summary and application APIs
 - Grievance, discrepancy, notification and verification APIs
 - Officer and administrator review APIs
-- Simulated IVR APIs
+- Twilio voice webhooks, call history and IVR browser simulator
 
 ## Not yet integrated
 
@@ -49,8 +49,8 @@ The prior completed task connected farmer registration end to end:
 - Supabase Auth
 - Supabase Storage and private document URLs
 - Row Level Security policies and migration-backed schema
-- Live telephony provider/webhook signatures
-- SMS provider
+- Live Twilio credential validation, public HTTPS webhook delivery and phone calls
+- Live SMS delivery
 - Gemini-assisted grievance drafting
 - Live scheme/policy verification sources
 - Full frontend replacement of remaining page-level demo state with API fetching
@@ -59,10 +59,26 @@ The prior completed task connected farmer registration end to end:
 
 Complete page-level integration for the remaining farmer and officer views so they fetch the same demo backend records rather than component-level sample values. Start with `/farmer/dashboard`, then `/farmer/schemes`, `/farmer/benefits` and `/farmer/applications`.
 
+Before any production voice rollout, choose and implement a retention policy for confirmed callback escalation summaries. The current call-history retention cleanup does not remove escalation records.
+
 ## Latest demo-login verification
 
 - Backend: `uv run pytest` — 12 passed
 - Frontend: `npm run typecheck` — passed
 - Frontend: `npm run build` — passed
 - Live role smoke tests: farmer, officer and admin logins returned matching seeded roles.
-- Local backend listens on port `8001` because port `8000` is held by a stale environment listener.
+- Farmer, officer, admin, and AI/RAG endpoints are served by the same FastAPI process on port `8000`.
+
+## Latest voice-agent implementation
+
+- Implemented Twilio voice routes on the existing FastAPI port `8000`, including signed webhooks, Hindi/English DTMF and speech menus, verified-source-only policy answers, OTP-gated private requests, and confirmation-gated grievance/callback creation.
+- Added farmer call/escalation history and an officer escalation queue with role checks, ordered status transitions, and audit records.
+- Updated `/farmer/ivr` to label browser simulation separately from live phone service and avoid fabricated fallback policy answers.
+- Added setup, security, cost considerations and limitations in `docs/VOICE_AGENT_INTEGRATION.md`; added names-only Twilio variables to `backend/.env.example`.
+- Added the root `POST /ivr` compatibility alias for TwiML Apps already configured with that incoming webhook path; it retains signature validation.
+- Mapped the existing `PUBLIC_BASE_URL` setting as a fallback for
+  `TWILIO_WEBHOOK_PUBLIC_URL`, while preserving the explicit Twilio setting's precedence.
+- Backend: `uv run pytest -q` — 31 passed (2 existing FastAPI lifespan deprecation warnings).
+- Frontend: `npm run typecheck` — passed; `npm run lint` — 0 errors and 6 existing warnings in unrelated files; `npm run build` — passed.
+- Browser smoke check: farmer IVR status and simulator safety message rendered; officer voice queue rendered after officer demo login.
+- Live Twilio calls, SMS, public webhook delivery and production authentication/data storage remain unverified.
