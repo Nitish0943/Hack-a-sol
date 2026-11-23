@@ -28,10 +28,29 @@ app.add_middleware(
 app.include_router(api_router)
 
 
+from fastapi.exceptions import HTTPException, RequestValidationError
+
 @app.on_event("startup")
 async def startup() -> None:
     initialize_database()
     seed_demo_data()
+
+
+@app.exception_handler(HTTPException)
+async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": str(exc.detail), "detail": exc.detail, "data": None},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    first_msg = exc.errors()[0]["msg"] if exc.errors() else "Validation failed"
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": first_msg, "detail": exc.errors(), "data": None},
+    )
 
 
 @app.exception_handler(Exception)
@@ -39,7 +58,7 @@ async def handle_unexpected_error(request: Request, exc: Exception) -> JSONRespo
     logger.exception("Unhandled error for %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"detail": "An unexpected server error occurred."},
+        content={"success": False, "message": "An unexpected server error occurred.", "detail": "An unexpected server error occurred."},
     )
 
 
