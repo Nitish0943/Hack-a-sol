@@ -1,4 +1,10 @@
-import type { ApiStatus } from "@/types/api";
+import type {
+  ApiStatus,
+  FarmerQueryRequest,
+  FarmerQueryResponse,
+  RAGStatusResponse,
+  SchemesListResponse,
+} from "@/types/api";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
   /\/$/,
@@ -25,6 +31,80 @@ export async function getStatus(signal?: AbortSignal): Promise<ApiStatus> {
   return (await response.json()) as ApiStatus;
 }
 
+export async function queryPolicyRAG(
+  payload: FarmerQueryRequest,
+  signal?: AbortSignal,
+): Promise<FarmerQueryResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/rag/query`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+      signal,
+    });
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
+    throw new Error(
+      `Unable to reach KrishiSetu AI backend at ${API_BASE_URL}. Please confirm the server is running on port 8000.`,
+    );
+  }
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`KrishiSetu AI query failed (HTTP ${response.status}): ${errorBody}`);
+  }
+
+  return (await response.json()) as FarmerQueryResponse;
+}
+
+export async function getIndexedSchemes(
+  signal?: AbortSignal,
+): Promise<SchemesListResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/rag/schemes`, {
+      cache: "no-store",
+      signal,
+    });
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
+    throw new Error(`Could not connect to schemes index at ${API_BASE_URL}.`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Backend returned HTTP ${response.status} while fetching schemes.`);
+  }
+
+  return (await response.json()) as SchemesListResponse;
+}
+
+export async function getRAGStatus(
+  signal?: AbortSignal,
+): Promise<RAGStatusResponse> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/rag/status`, {
+      cache: "no-store",
+      signal,
+    });
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
+    throw new Error(`Could not connect to RAG status endpoint at ${API_BASE_URL}.`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Backend returned HTTP ${response.status}.`);
+  }
+
+  return (await response.json()) as RAGStatusResponse;
+}
 type ApiEnvelope<T> = {
   success: boolean;
   message?: string;
@@ -74,6 +154,19 @@ export async function apiRequest<T>(
   }
 
   return (result?.data !== undefined ? result.data : result) as T;
+  const response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+  const result = (await response.json()) as ApiEnvelope<T>;
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "The KrishiSetu request failed.");
+  }
+  return result.data;
 }
 
 export const authApi = {
@@ -84,6 +177,7 @@ export const authApi = {
     }),
   verifyOtp: (mobileNumber: string, otp: string, role: string) =>
     apiRequest<{ accessToken: string; user: { role: string; full_name?: string } }>("/auth/verify-otp", {
+    apiRequest<{ accessToken: string; user: { role: string } }>("/auth/verify-otp", {
       method: "POST",
       body: JSON.stringify({ mobileNumber, otp, role }),
     }),

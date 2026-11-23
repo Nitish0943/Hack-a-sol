@@ -271,4 +271,13 @@ export default function NewGrievancePage() {
       </Suspense>
     </div>
   );
+import { useLanguage } from "@/components/language-provider";
+import { translateText } from "@/lib/i18n/translations";
+
+export default function NewGrievancePage() {
+  const { language } = useLanguage();
+  const [draft,setDraft] = useState("");
+  const [draftEdited,setDraftEdited] = useState(false);
+  const initialDraft = "I am requesting review of a recorded sanction amount that differs from the benefit estimate for my PM-KISAN application.";
+  return <div><PageHeading title="Create Grievance" description="Review the complaint carefully before submitting" /><div className="grid gap-5 lg:grid-cols-[360px_1fr]"><Card className="h-fit"><h3 className="font-bold">Complaint details</h3><div className="mt-4 space-y-4"><label className="block text-sm font-semibold">Category<select className="field mt-2"><option>Incorrect subsidy amount</option><option>Payment not received</option><option>Application delayed</option><option>Eligibility issue</option></select></label><label className="block text-sm font-semibold">Related scheme<select className="field mt-2"><option>PM-KISAN</option><option>PM Fasal Bima Yojana</option><option>Kisan Credit Card</option></select></label><label className="block text-sm font-semibold">Application reference<input className="field mt-2" defaultValue="KS-2026-10482" /></label><label className="block text-sm font-semibold">Preferred contact<select className="field mt-2"><option>Mobile call</option><option>SMS</option><option>Platform notification</option></select></label></div></Card><Card><h3 className="font-bold">Description</h3><textarea className="field mt-4 min-h-36" value={draftEdited ? draft : translateText(initialDraft, language)} onChange={(event)=>{setDraft(event.target.value);setDraftEdited(true);}} /><div className="mt-4 rounded-xl bg-slate-50 p-4"><p className="text-xs font-bold uppercase text-slate-400">Attached documents</p><button className="mt-3 rounded-lg border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500">Choose supporting document</button></div><div className="mt-6 flex justify-end gap-3"><button className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold">Save draft</button><button onClick={()=>alert(translateText("Demo grievance submitted: GRV-CG-10482",language))} className="rounded-xl bg-[#166534] px-5 py-3 text-sm font-semibold text-white">Confirm & submit</button></div></Card></div></div>;
 }

@@ -114,6 +114,7 @@ export function PortalLayout({
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <button aria-label="Search" className="hidden size-10 place-items-center glass rounded-xl text-slate-500 sm:grid">
+            <button aria-label="Search" className="hidden size-10 place-items-center rounded-xl border border-slate-200 text-slate-500 sm:grid">
               <Search className="size-4" />
             </button>
             <Link href={role === "Farmer" ? "/farmer/notifications" : "#"} aria-label="Notifications" className="relative grid size-10 place-items-center glass rounded-xl text-slate-500">

@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,6 +12,11 @@ class Settings(BaseSettings):
     demo_otp_enabled: bool = True
     demo_otp: str = "123456"
     database_path: str = "./krishisetu.db"
+
+    # KrishiSetu AI RAG settings
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+    llm_provider: str = "gemini"
 
     model_config = SettingsConfigDict(
         env_file=".env",

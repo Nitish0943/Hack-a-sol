@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
 import { LanguageProvider } from "@/components/language-provider";
 import { LivingField } from "@/components/background/living-field";
+import { LanguageProvider } from "@/components/language-provider";
 import "./globals.css";
 
 // Swap the fonts here in one place if you want a different look.
@@ -18,6 +19,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${latin.variable} ${deva.variable}`}>
       <body>
         <LivingField />
+    <html lang="en">
+      <body>
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
