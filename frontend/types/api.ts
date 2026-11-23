@@ -61,3 +61,36 @@ export type RAGStatusResponse = {
   llm_provider: string;
   supported_languages: string[];
 };
+
+export type VoiceServiceStatus = {
+  status: "configured" | "not_configured";
+  incoming_webhook_ready: boolean;
+  private_verification_ready: boolean;
+  phone_number: string | null;
+  supported_languages: string[];
+  regional_speech_available: boolean;
+  is_demo: boolean;
+};
+
+export type VoiceCall = {
+  call_sid: string;
+  language: string;
+  call_status: string;
+  outcome: string | null;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+};
+
+export type VoiceEscalation = {
+  id: string;
+  call_sid?: string;
+  farmer_id?: string;
+  reason: string;
+  summary: string;
+  preferred_language: string;
+  status: string;
+  assigned_officer?: string | null;
+  created_at: string;
+  updated_at: string;
+};

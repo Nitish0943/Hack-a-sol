@@ -1,13 +1,14 @@
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
+from app.api.v1.voice import incoming_call
 from app.core.config import get_settings
 from app.schemas.status import HealthResponse, WelcomeResponse
-from app.db.store import initialize_database, seed_demo_data
+from app.db.store import cleanup_voice_records, initialize_database, seed_demo_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,10 +29,16 @@ app.add_middleware(
 app.include_router(api_router)
 
 
+@app.post("/ivr", include_in_schema=False)
+async def legacy_ivr_incoming_call(request: Request) -> Response:
+    return await incoming_call(request)
+
+
 @app.on_event("startup")
 async def startup() -> None:
     initialize_database()
     seed_demo_data()
+    cleanup_voice_records(settings.voice_log_retention_days)
 
 
 @app.exception_handler(Exception)

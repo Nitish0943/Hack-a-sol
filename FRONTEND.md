@@ -924,17 +924,23 @@ Explain how farmers can access KrishiSetu through a phone call.
 | Key | Service |
 |---|---|
 | 1 | Scheme information |
-| 2 | Loan and subsidy |
-| 3 | Application status |
-| 4 | Payment status |
-| 5 | Register grievance |
+| 2 | Eligibility information |
+| 3 | Loan and subsidy information |
+| 4 | Application status (SMS OTP) |
+| 5 | Benefit and payment records (SMS OTP) |
+| 6 | Register grievance (SMS OTP and confirmation) |
+| 7 | Request officer callback (SMS OTP and confirmation) |
 | 9 | Repeat menu |
+| 0 | End call |
 
 ### Optional Demo Mode
 
 Provide a simulated **IVR** interface with keypad buttons for judges when a live telephony integration is unavailable.
 
 Do not present a simulated call as a real phone connection.
+In the browser simulator, only policy-query keys are simulated; private account
+actions remain exclusive to a configured phone call and are never represented
+as completed by the simulator.
 
 ---
 
