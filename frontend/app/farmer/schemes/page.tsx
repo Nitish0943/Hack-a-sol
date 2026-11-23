@@ -1,163 +1,299 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ExternalLink, Filter, Search, Sparkles, Volume2, Wheat } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { Card, PageHeading, StatusBadge, VoiceAssistButton } from "@/components/ui-kit";
-import { useTranslation } from "@/lib/i18n/context";
-import { getSchemes } from "@/lib/api";
+import { Search, Filter, ArrowRight, ShieldCheck, Tag, Building2, CheckCircle2 } from "lucide-react";
+import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+
+interface SchemeDirectoryItem {
+  id: string;
+  name: string;
+  department: string;
+  category: string;
+  description: string;
+  benefit: string;
+  status: "Potentially eligible" | "Eligible" | "Verification required" | "Not eligible";
+  updated: string;
+  tags: string[];
+}
+
+const DEFAULT_SCHEMES: SchemeDirectoryItem[] = [
+  {
+    id: "pm-kisan",
+    name: "PM-KISAN Samman Nidhi",
+    department: "Ministry of Agriculture & Farmers Welfare",
+    category: "Income support",
+    description: "Direct annual financial assistance of ₹6,000 paid in three equal installments to eligible landholding farmer families across the country.",
+    benefit: "₹6,000 per financial year",
+    status: "Potentially eligible",
+    updated: "18 Nov 2026",
+    tags: ["Central Sector", "DBT", "Income Support"],
+  },
+  {
+    id: "kcc",
+    name: "Kisan Credit Card (KCC) Crop Loan",
+    department: "Department of Agriculture & Banking Partners",
+    category: "Agricultural credit",
+    description: "Concessional institutional short-term credit for crop cultivation, post-harvest expenses, and allied farm machinery maintenance with 3% interest subvention.",
+    benefit: "Credit up to ₹3,00,000 @ 4% net interest",
+    status: "Potentially eligible",
+    updated: "15 Nov 2026",
+    tags: ["Short-term Credit", "Subvention", "NABARD"],
+  },
+  {
+    id: "pmfby",
+    name: "PM Fasal Bima Yojana (PMFBY)",
+    department: "Ministry of Agriculture & Insurance Partners",
+    category: "Crop insurance",
+    description: "Comprehensive risk insurance cover for non-preventable natural risks from pre-sowing to post-harvest loss at nominal premium (2% Kharif, 1.5% Rabi).",
+    benefit: "Risk-based claim compensation",
+    status: "Verification required",
+    updated: "12 Nov 2026",
+    tags: ["Insurance", "Climate Resilience", "Kharif & Rabi"],
+  },
+  {
+    id: "pmksy",
+    name: "PM Krishi Sinchayee Yojana (Per Drop More Crop)",
+    department: "Department of Water Resources & Agriculture",
+    category: "Irrigation",
+    description: "Financial subsidy assistance for the installation of micro-irrigation systems (drip and sprinkler) to improve farm water use efficiency.",
+    benefit: "Up to 55% capital subsidy",
+    status: "Eligible",
+    updated: "10 Nov 2026",
+    tags: ["Drip Irrigation", "Water Efficiency", "Capital Grant"],
+  },
+  {
+    id: "smam",
+    name: "Sub-Mission on Agricultural Mechanization (SMAM)",
+    department: "Directorate of Agricultural Engineering",
+    category: "Farm machinery",
+    description: "Subsidies for small and marginal farmers on custom hiring services and procurement of tractors, power tillers, rotavators, and laser land levelers.",
+    benefit: "40% to 50% equipment subsidy",
+    status: "Potentially eligible",
+    updated: "05 Nov 2026",
+    tags: ["Farm Machinery", "Mechanization", "Women Farmer Bonus"],
+  },
+  {
+    id: "soil-health",
+    name: "Soil Health Card Scheme",
+    department: "Department of Agriculture, Cooperation & Farmers Welfare",
+    category: "Soil & inputs",
+    description: "Periodic testing of soil samples and issuance of nutrient recommendations tailored to individual farm holdings to reduce fertilizer wastage.",
+    benefit: "Free testing & customized dosage advice",
+    status: "Eligible",
+    updated: "01 Nov 2026",
+    tags: ["Nutrient Management", "Free Service"],
+  },
+];
 
 export default function SchemesPage() {
-  const { t, locale, speak, language } = useTranslation();
-  const [schemes, setSchemes] = useState<any[]>([]);
-  const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState("All categories");
+  const [eligibilityFilter, setEligibilityFilter] = useState("All");
 
-  useEffect(() => {
-    setLoading(true);
-    getSchemes(category, "All", search).then((data) => {
-      setSchemes(data);
-      setLoading(false);
+  const filteredSchemes = useMemo(() => {
+    return DEFAULT_SCHEMES.filter((scheme) => {
+      // Search matching
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        const matchesName = scheme.name.toLowerCase().includes(query);
+        const matchesDesc = scheme.description.toLowerCase().includes(query);
+        const matchesDept = scheme.department.toLowerCase().includes(query);
+        const matchesTags = scheme.tags.some((t) => t.toLowerCase().includes(query));
+        if (!matchesName && !matchesDesc && !matchesDept && !matchesTags) {
+          return false;
+        }
+      }
+
+      // Category matching
+      if (category !== "All categories" && scheme.category.toLowerCase() !== category.toLowerCase()) {
+        return false;
+      }
+
+      // Eligibility matching
+      if (eligibilityFilter !== "All" && scheme.status.toLowerCase() !== eligibilityFilter.toLowerCase()) {
+        return false;
+      }
+
+      return true;
     });
-  }, [category, search]);
-
-  const categories = [
-    "All",
-    "Income support",
-    "Agricultural credit",
-    "Crop insurance",
-    "Equipment subsidy",
-    "Irrigation support",
-    "Pension support",
-  ];
+  }, [search, category, eligibilityFilter]);
 
   return (
     <div className="space-y-6">
       <PageHeading
-        title={t("schemes.title")}
-        description={
-          language === "hi"
-            ? "सत्यापित केंद्रीय एवं छत्तीसगढ़ राज्य कृषि योजनाओं का आधिकारिक कैटलॉग। प्रत्यक्ष आय, रियायती ऋण, फसल बीमा एवं कृषि यंत्र अनुदान।"
-            : "Verified central and state agricultural policy catalog. Direct income support, subsidized institutional credit, crop insurance, and equipment subsidies."
-        }
-        action={
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 text-xs font-mono font-bold">
-              {schemes.length} Schemes Verified
-            </span>
-          </div>
-        }
+        title="Government Scheme Directory"
+        description="Discover central and state agricultural schemes, check eligibility criteria, and calculate benefit entitlements"
       />
 
-      {/* Glass Search & Filter Controls */}
-      <div className="glass-panel p-4 sm:p-5 border border-white/10">
-        <div className="grid gap-4 md:grid-cols-[1fr_240px]">
+      {/* Filter Card */}
+      <Card className="glass">
+        <div className="grid gap-3 md:grid-cols-[1fr_200px_200px]">
           <div className="relative">
             <Search className="absolute left-3.5 top-3.5 size-4 text-slate-400" />
             <input
-              className="field pl-10"
-              placeholder={t("schemes.searchPlaceholder")}
+              type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by scheme name, crop, or benefit keywords..."
+              className="field pl-10"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="size-4 text-emerald-400 shrink-0" />
+          <div>
+            <label htmlFor="scheme-category-filter" className="sr-only">Filter by category</label>
             <select
-              className="field cursor-pointer"
+              id="scheme-category-filter"
+              aria-label="Filter by category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
+              className="field"
             >
-              {categories.map((c) => (
-                <option key={c} value={c} className="bg-[#07130B] text-slate-100">
-                  {c === "All" ? t("schemes.allCategories") : c}
-                </option>
-              ))}
+              <option>All categories</option>
+              <option value="Income support">Income support</option>
+              <option value="Agricultural credit">Agricultural credit</option>
+              <option value="Crop insurance">Crop insurance</option>
+              <option value="Irrigation">Irrigation</option>
+              <option value="Farm machinery">Farm machinery</option>
+              <option value="Soil & inputs">Soil & inputs</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="scheme-eligibility-filter" className="sr-only">Filter by eligibility</label>
+            <select
+              id="scheme-eligibility-filter"
+              aria-label="Filter by eligibility"
+              value={eligibilityFilter}
+              onChange={(e) => setEligibilityFilter(e.target.value)}
+              className="field"
+            >
+              <option value="All">Eligibility: All</option>
+              <option value="Eligible">Eligible</option>
+              <option value="Potentially eligible">Potentially eligible</option>
+              <option value="Verification required">Verification required</option>
             </select>
           </div>
         </div>
-      </div>
+
+        {/* Quick filter pills */}
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3 dark:border-white/10 text-xs text-slate-500">
+          <span className="font-semibold flex items-center gap-1">
+            <Filter className="size-3.5" /> Quick Filters:
+          </span>
+          {["All", "Income support", "Agricultural credit", "Crop insurance", "Farm machinery"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat === "All" ? "All categories" : cat)}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                (cat === "All" && category === "All categories") || category === cat
+                  ? "glass-green font-bold text-white shadow-sm"
+                  : "glass hover:bg-black/5 dark:hover:bg-white/5"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+          {(search || category !== "All categories" || eligibilityFilter !== "All") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setCategory("All categories");
+                setEligibilityFilter("All");
+              }}
+              className="ml-auto text-xs text-rose-600 hover:underline dark:text-rose-400 font-semibold"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+      </Card>
 
       {/* Schemes Grid */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        {schemes.map((scheme) => {
-          const displayName = locale === "hi" || locale === "cghi" ? scheme.name_hi : scheme.name;
-          const displaySummary = locale === "hi" || locale === "cghi" ? scheme.benefit_summary_hi : scheme.benefit_summary;
-          const displayDesc = locale === "hi" || locale === "cghi" ? scheme.description_hi : scheme.description;
-
-          return (
-            <div
+      {filteredSchemes.length === 0 ? (
+        <Card className="glass py-12 text-center">
+          <p className="text-base font-semibold text-slate-700 dark:text-slate-200">
+            No agricultural schemes match your search criteria.
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Try resetting your filters or typing different keywords.
+          </p>
+          <button
+            onClick={() => {
+              setSearch("");
+              setCategory("All categories");
+              setEligibilityFilter("All");
+            }}
+            className="glass-btn glass-green mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white"
+          >
+            Show All Schemes
+          </button>
+        </Card>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2">
+          {filteredSchemes.map((scheme) => (
+            <Card
               key={scheme.id}
-              className="glass-card p-6 flex flex-col justify-between hover:border-emerald-500/40 transition-all group"
+              className="glass relative flex flex-col justify-between overflow-hidden transition hover:shadow-xl"
             >
-              <div className="space-y-3">
+              <div>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                      <Tag className="size-3" />
                       {scheme.category}
                     </span>
-                    <h3 className="mt-2 text-xl font-bold text-white group-hover:text-emerald-300 transition font-display flex items-center gap-2">
-                      <span>{displayName}</span>
-                      <button
-                        onClick={() => speak(`${displayName}. ${displaySummary}`)}
-                        title="Read aloud"
-                        className="text-slate-400 hover:text-emerald-400 transition cursor-pointer"
-                      >
-                        <Volume2 className="size-4" />
-                      </button>
+                    <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
+                      {scheme.name}
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">{scheme.department}</p>
                   </div>
-                  <span className="rounded-full bg-white/5 border border-white/10 text-slate-300 px-2.5 py-1 text-xs font-mono font-bold shrink-0">
-                    {scheme.state}
-                  </span>
+                  <StatusBadge status={scheme.status} />
                 </div>
 
-                <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3">
-                  <p className="text-[10px] font-mono font-bold uppercase text-emerald-400 tracking-wider">
-                    Official Entitlement
-                  </p>
-                  <p className="text-base font-bold text-white font-mono mt-0.5">{displaySummary}</p>
-                </div>
-
-                <p className="text-xs leading-relaxed text-slate-300 font-medium">
-                  {displayDesc}
+                <p className="mt-3 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                  {scheme.description}
                 </p>
-              </div>
 
-              <div className="mt-6 border-t border-white/[0.08] pt-4 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div>
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    Policy: <strong className="text-slate-200">{scheme.policy_version}</strong> ({scheme.financial_year})
-                  </p>
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    Verified: <span className="text-emerald-400 font-semibold">{scheme.last_verified}</span>
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/farmer/eligibility?scheme=${scheme.id}`}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-300 border border-white/15 px-3 py-2 text-xs font-bold transition"
-                  >
-                    <CheckCircle2 className="size-3.5" />
-                    <span>Check Eligibility</span>
-                  </Link>
-                  <Link
-                    href={`/farmer/schemes/${scheme.id}`}
-                    className="btn-primary text-xs py-2 px-3.5"
-                  >
-                    <span>{t("common.viewDetails")}</span>
-                    <ArrowRight className="size-3.5" />
-                  </Link>
+                {/* Tags */}
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {scheme.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md bg-black/5 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/10 dark:text-slate-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+
+              <div className="mt-5 border-t border-black/5 pt-4 dark:border-white/10">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                      <Building2 className="size-3" />
+                      <span className="truncate max-w-[180px]">{scheme.department}</span>
+                    </div>
+                    <p className="mt-1 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                      {scheme.benefit}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/farmer/schemes/${scheme.id}`}
+                      className="glass-btn glass-green inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-white shadow transition"
+                    >
+                      <span>Details</span>
+                      <ArrowRight className="size-3" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

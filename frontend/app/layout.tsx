@@ -1,43 +1,24 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
+import { LanguageProvider } from "@/components/language-provider";
+import { LivingField } from "@/components/background/living-field";
 import "./globals.css";
-import { I18nProvider } from "@/lib/i18n/context";
-import { AmbientBackground } from "@/components/ambient-background";
+
+// Swap the fonts here in one place if you want a different look.
+const latin = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-latin", display: "swap" });
+const deva = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-deva", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "KrishiSetu | Agricultural Entitlement Intelligence & Benefit Transparency",
-  description:
-    "Next-generation agricultural policy, loan and subsidy transparency platform for Indian farmers, tenant farmers, and sharecroppers.",
+  title: "KrishiSetu | Know Your Benefits",
+  description: "Agricultural policy, loan and subsidy transparency platform",
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="hi" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-screen bg-[#0A140E] text-slate-100 antialiased font-sans selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative">
-        {/* Cinematic Environmental Background */}
-        <AmbientBackground />
-        
-        {/* Main Application Content */}
-        <div className="relative z-10 flex min-h-screen flex-col">
-          <I18nProvider>{children}</I18nProvider>
-        </div>
+    <html lang="en" className={`${latin.variable} ${deva.variable}`}>
+      <body>
+        <LivingField />
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

@@ -1,263 +1,250 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
-  FileText,
-  IndianRupee,
-  Landmark,
-  MessageSquareWarning,
-  ShieldCheck,
-  Volume2,
-  WalletCards,
-  ArrowRight,
-} from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { ArrowLeft, AlertTriangle, ShieldCheck, CheckCircle2, FileText, ArrowRight, Clock } from "lucide-react";
 import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
-import { BenefitJourneyVisualizer, JourneyStage } from "@/components/benefit-journey";
-import { useTranslation } from "@/lib/i18n/context";
-import { getBenefits } from "@/lib/api";
 
-export default function BenefitDetailPage() {
-  const params = useParams();
-  const benefitId = (params?.benefitId as string) || "benefit-2";
-  const { t, locale, speak } = useTranslation();
-  const [benefit, setBenefit] = useState<any>(null);
+interface BenefitRecordDetails {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  status: string;
+  estimated: number;
+  applied: number;
+  approved: number;
+  sanctioned: number;
+  disbursed: number;
+  received: number;
+  bankAccount: string;
+  discrepancyNote?: string;
+  timeline: Array<{ stage: string; date: string; completed: boolean }>;
+}
 
-  useEffect(() => {
-    getBenefits().then((list) => {
-      const matched = list.find((b) => b.id === benefitId);
-      setBenefit(matched || list[0]);
-    });
-  }, [benefitId]);
+const BENEFIT_MAP: Record<string, BenefitRecordDetails> = {
+  "benefit-1": {
+    id: "benefit-1",
+    name: "PM-KISAN Samman Nidhi",
+    code: "BF-CG-001",
+    category: "Income support",
+    status: "Received",
+    estimated: 6000,
+    applied: 6000,
+    approved: 6000,
+    sanctioned: 6000,
+    disbursed: 6000,
+    received: 6000,
+    bankAccount: "SBI •••• 4892 (Aadhaar Seeded)",
+    timeline: [
+      { stage: "Eligibility identified", date: "02 May 2026", completed: true },
+      { stage: "Beneficiary registered & e-KYC", date: "05 May 2026", completed: true },
+      { stage: "State verification approved", date: "15 May 2026", completed: true },
+      { stage: "R-FTO Generated & Sanctioned", date: "28 May 2026", completed: true },
+      { stage: "DBT Direct Bank Credit", date: "22 Nov 2026", completed: true },
+    ],
+  },
+  "benefit-2": {
+    id: "benefit-2",
+    name: "PM Fasal Bima Yojana",
+    code: "BF-CG-002",
+    category: "Crop insurance",
+    status: "Approved",
+    estimated: 12000,
+    applied: 12000,
+    approved: 12000,
+    sanctioned: 0,
+    disbursed: 0,
+    received: 0,
+    bankAccount: "SBI •••• 4892",
+    discrepancyNote: "Claim approved by insurance committee, but sanction order is overdue by 14 days.",
+    timeline: [
+      { stage: "Crop loss claim submitted", date: "10 Oct 2026", completed: true },
+      { stage: "Survey & remote sensing verified", date: "24 Oct 2026", completed: true },
+      { stage: "Claim compensation approved", date: "08 Nov 2026", completed: true },
+      { stage: "Treasury sanction release", date: "Pending issuance", completed: false },
+      { stage: "Bank credit confirmation", date: "Pending", completed: false },
+    ],
+  },
+  "benefit-3": {
+    id: "benefit-3",
+    name: "Kisan Credit Card Subvention",
+    code: "BF-CG-003",
+    category: "Agricultural credit",
+    status: "Sanctioned",
+    estimated: 24500,
+    applied: 20000,
+    approved: 18000,
+    sanctioned: 18000,
+    disbursed: 12000,
+    received: 12000,
+    bankAccount: "DCCB Raipur •••• 1928",
+    discrepancyNote: "Partial subvention release: ₹6,000 pending audit confirmation.",
+    timeline: [
+      { stage: "Prompt repayment audited", date: "12 Oct 2026", completed: true },
+      { stage: "3% Subvention calculated", date: "20 Oct 2026", completed: true },
+      { stage: "District committee sanction", date: "02 Nov 2026", completed: true },
+      { stage: "Tranche 1 disbursed (₹12,000)", date: "18 Nov 2026", completed: true },
+      { stage: "Tranche 2 balance (₹6,000)", date: "Under review", completed: false },
+    ],
+  },
+};
 
-  if (!benefit) {
-    return (
-      <div className="py-20 text-center">
-        <div className="inline-block size-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-        <p className="mt-3 text-sm text-slate-400 font-semibold">{t("common.loading")}</p>
-      </div>
-    );
-  }
-
-  const isMismatch = benefit.sanctioned_amount > 0 && benefit.sanctioned_amount < benefit.estimated_amount;
-  const variance = benefit.estimated_amount - benefit.sanctioned_amount;
-
-  // Build the 8 stages for this specific benefit
-  const stages: JourneyStage[] = [
-    {
-      id: "stage-1",
-      name: "Potentially Eligible",
-      name_hi: "संभावित पात्र",
-      status: "completed",
-      amount: benefit.estimated_amount,
-      amountLabel: "Estimated Entitlement",
-      amountLabel_hi: "अनुमानित पात्रता",
-      attribution: "System-calculated",
-      date: "10 Oct 2026",
-      policyCitation: "PMFBY Operational Guidelines Para 4.1",
-      explanation: "Farmer profile satisfied location, crop (Paddy), and notified insurance unit conditions.",
-      explanation_hi: "किसान प्रोफ़ाइल ने स्थान, धान की फसल और अधिसूचित बीमा इकाई मानकों को पूर्ण किया।",
-      recommendedAction: "Prepare required sowing certificate and land records.",
-      recommendedAction_hi: "फसल बुवाई प्रमाण पत्र और भू-अभिलेख तैयार करें।",
-    },
-    {
-      id: "stage-2",
-      name: "Application Prepared",
-      name_hi: "आवेदन तैयार",
-      status: "completed",
-      amountLabel: "Dossier Status",
-      amountLabel_hi: "दस्तावेज़ स्थिति",
-      attribution: "Farmer-reported",
-      date: "04 Nov 2026",
-      referenceNumber: "FORM-CG-PMFBY-2026",
-      evidenceDocument: "Khasra B1 & Sowing Declaration",
-      explanation: "Dossier assembled with verified Khasra 142/2 and crop sowing declaration.",
-      explanation_hi: "खसरा 142/2 और फसल बुवाई स्व-घोषणा के साथ आवेदन तैयार किया गया।",
-      recommendedAction: "Submit dossier to PACS Samiti or Lok Seva Kendra.",
-      recommendedAction_hi: "आवेदन पैक्स समिति या लोक सेवा केंद्र में जमा करें।",
-    },
-    {
-      id: "stage-3",
-      name: "Submitted",
-      name_hi: "आवेदन प्रस्तुत",
-      status: "completed",
-      amount: benefit.applied_amount,
-      amountLabel: "Claim Amount Filed",
-      amountLabel_hi: "दावा की गई राशि",
-      attribution: "Officially verified",
-      date: "08 Nov 2026",
-      referenceNumber: "CG-PMFBY-8821",
-      evidenceDocument: "PACS Acknowledgment Receipt",
-      explanation: "Official application registered in National Crop Insurance Portal.",
-      explanation_hi: "राष्ट्रीय फसल बीमा पोर्टल में आधिकारिक पावती दर्ज हुई।",
-      recommendedAction: "Await joint crop damage field survey.",
-      recommendedAction_hi: "संयुक्त फसल क्षति सर्वेक्षण की प्रतीक्षा करें।",
-    },
-    {
-      id: "stage-4",
-      name: "Field Verification",
-      name_hi: "क्षेत्रीय सत्यापन",
-      status: "completed",
-      amountLabel: "Survey Finding",
-      amountLabel_hi: "सर्वेक्षण रिपोर्ट",
-      attribution: "Officer-reviewed",
-      date: "14 Nov 2026",
-      evidenceDocument: "Joint Survey Report & CCE Yield Sheet",
-      explanation: "RAEO and Insurance Surveyor recorded 60% threshold yield loss in Khamtarai.",
-      explanation_hi: "ग्रामीण कृषि विस्तार अधिकारी और बीमा सर्वेक्षक द्वारा 60% फसल क्षति प्रमाणित।",
-      recommendedAction: "Survey report uploaded to claims clearinghouse.",
-      recommendedAction_hi: "सर्वेक्षण रिपोर्ट दावा डेस्क को प्रेषित की गई।",
-    },
-    {
-      id: "stage-5",
-      name: "Approved",
-      name_hi: "स्वीकृत",
-      status: "completed",
-      amount: benefit.approved_amount,
-      amountLabel: "Desk Approved Amount",
-      amountLabel_hi: "स्वीकृत राशि",
-      attribution: "Officer-reviewed",
-      date: "16 Nov 2026",
-      referenceNumber: "APR-2026-9921",
-      explanation: "District Agriculture Level Committee cleared claim entitlement of ₹12,000.",
-      explanation_hi: "जिला कृषि समिति द्वारा ₹12,000 की पूर्ण पात्रता स्वीकृत की गई।",
-      recommendedAction: "Transmitted to insurer for sanction order issuance.",
-      recommendedAction_hi: "बीमा कंपनी को स्वीकृति आदेश जारी करने हेतु भेजा गया।",
-    },
-    {
-      id: "stage-6",
-      name: "Sanctioned",
-      name_hi: "स्वीकृति आदेश जारी",
-      status: isMismatch ? "discrepancy" : "completed",
-      amount: benefit.sanctioned_amount,
-      amountLabel: "Official Sanction Order",
-      amountLabel_hi: "स्वीकृति आदेश राशि",
-      attribution: "Officially verified",
-      date: "18 Nov 2026",
-      referenceNumber: "SANC-AIC-88412",
-      evidenceDocument: "Sanction Letter No. AIC/CG/2026/88412",
-      blocker: isMismatch
-        ? `Sanction order issued for ₹${benefit.sanctioned_amount.toLocaleString()} instead of approved ₹${benefit.estimated_amount.toLocaleString()} (Discrepancy gap of ₹${variance.toLocaleString()}).`
-        : undefined,
-      explanation: isMismatch
-        ? "Automated Policy-to-Payment Engine flagged a variance: Insurer sanction under-calculated the notified threshold loss by ₹4,000."
-        : "Sanction order authorized for payment release.",
-      explanation_hi: isMismatch
-        ? "नीति-से-भुगतान सत्यनिष्ठा इंजन द्वारा ₹4,000 की कमी पाई गई। बीमा कंपनी ने स्वीकृत से कम राशि का आदेश जारी किया।"
-        : "स्वीकृति आदेश अधिकृत किया गया।",
-      recommendedAction: isMismatch ? "Raise official grievance for claim recalculation." : "Proceed to disbursement batch.",
-      recommendedAction_hi: isMismatch ? "राशि सुधार हेतु आधिकारिक शिकायत दर्ज करें।" : "भुगतान बैच की प्रतीक्षा करें।",
-    },
-    {
-      id: "stage-7",
-      name: "Disbursed",
-      name_hi: "भुगतान प्रेषित",
-      status: benefit.disbursed_amount > 0 ? "completed" : "current",
-      amount: benefit.disbursed_amount,
-      amountLabel: "Treasury Disbursed",
-      amountLabel_hi: "कोषालय द्वारा प्रेषित",
-      attribution: "System-calculated",
-      date: benefit.disbursed_amount > 0 ? "20 Nov 2026" : "Pending Treasury Batch",
-      referenceNumber: "PFMS-CG-BATCH-4412",
-      explanation: benefit.disbursed_amount > 0
-        ? "Direct Benefit Transfer release batch generated on Public Financial Management System."
-        : "Sanction order queued in PFMS payment file creation.",
-      explanation_hi: benefit.disbursed_amount > 0
-        ? "पीएफएमएस पोर्टल पर डीबीटी भुगतान बैच तैयार किया गया।"
-        : "पीएफएमएस भुगतान बैच का सृजन लंबित है।",
-      recommendedAction: "Monitor bank Aadhaar-NPCI credit.",
-      recommendedAction_hi: "बैंक खाते में आधार डीबीटी क्रेडिट की निगरानी करें।",
-    },
-    {
-      id: "stage-8",
-      name: "Received Confirmed",
-      name_hi: "बैंक खाते में प्राप्त",
-      status: benefit.received_amount > 0 ? "completed" : "upcoming",
-      amount: benefit.received_amount,
-      amountLabel: "Bank Confirmed Received",
-      amountLabel_hi: "बैंक खाते में जमा राशि",
-      attribution: "Officially verified",
-      date: benefit.received_amount > 0 ? "22 Nov 2026" : "Awaiting Bank Credit",
-      referenceNumber: "UTR-SBIN-88941245",
-      explanation: benefit.received_amount > 0
-        ? "Confirmed credited into Aadhaar-seeded bank account."
-        : "Awaiting final NPCI clearing and SMS confirmation.",
-      explanation_hi: benefit.received_amount > 0
-        ? "आधार से जुड़े बैंक खाते में राशि सफलतापूर्वक जमा हुई।"
-        : "अंतिम बैंक क्लीयरिंग और एसएमएस पुष्टि प्रतीक्षित है।",
-      recommendedAction: "Download tax/ledger receipt for tax and revenue records.",
-      recommendedAction_hi: "राजस्व अभिलेख हेतु पावती रसीद डाउनलोड करें।",
-    },
-  ];
+export default async function BenefitDetailPage({
+  params,
+}: {
+  params: Promise<{ benefitId: string }>;
+}) {
+  const { benefitId } = await params;
+  const benefit = BENEFIT_MAP[benefitId] || {
+    id: benefitId,
+    name: "Agricultural Benefit Record",
+    code: `BF-CG-${benefitId.slice(0, 6).toUpperCase()}`,
+    category: "Government Assistance",
+    status: "Approved",
+    estimated: 10000,
+    applied: 10000,
+    approved: 10000,
+    sanctioned: 10000,
+    disbursed: 0,
+    received: 0,
+    bankAccount: "State Bank of India •••• 4892",
+    timeline: [
+      { stage: "Application submitted", date: "01 Nov 2026", completed: true },
+      { stage: "Officer verified", date: "10 Nov 2026", completed: true },
+      { stage: "Sanction pending", date: "In progress", completed: false },
+    ],
+  };
 
   return (
     <div className="space-y-6">
-      {/* Back button and status */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/farmer/benefits"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition"
-        >
-          <ArrowLeft className="size-4" /> Back to My Benefits Ledger
-        </Link>
-        <StatusBadge status={benefit.status} />
-      </div>
+      <Link
+        href="/farmer/benefits"
+        className="glass glass-btn inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to Benefit Ledger
+      </Link>
 
       <PageHeading
-        title={benefit.scheme_name || benefit.scheme_id}
-        description={`Benefit Ledger Record #${benefit.id} · Financial Year ${benefit.financial_year} · ${benefit.installment_info}`}
+        title={benefit.name}
+        description={`Record ${benefit.code} · ${benefit.category}`}
+        action={<StatusBadge status={benefit.status} />}
       />
 
-      {/* Signature Feature: Interactive 8-Stage Benefit Journey */}
-      <BenefitJourneyVisualizer
-        schemeName={benefit.scheme_name}
-        schemeCode={benefit.scheme_id.toUpperCase()}
-        currentStageIndex={isMismatch ? 5 : 6}
-        stages={stages}
-      />
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* Left Column: Breakdown and Timeline */}
+        <div className="space-y-6">
+          <Card className="glass">
+            <h3 className="font-bold text-slate-900 dark:text-white">Lifecycle Ledger Amounts</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Audit trail of benefit entitlements from initial calculation to bank realization
+            </p>
 
-      {/* Discrepancy Alert & Grievance Actions */}
-      {isMismatch && (
-        <div className="rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-950/40 via-rose-900/15 to-transparent p-6 backdrop-blur-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-rose-300 font-bold text-sm">
-              <AlertTriangle className="size-5 text-rose-400" />
-              <span>Policy Discrepancy Detected by Integrity Engine</span>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {[
+                ["Estimated", benefit.estimated],
+                ["Applied", benefit.applied],
+                ["Approved", benefit.approved],
+                ["Sanctioned", benefit.sanctioned],
+                ["Disbursed", benefit.disbursed],
+                ["Received in Bank", benefit.received],
+              ].map(([label, value]) => (
+                <div key={label as string} className="glass rounded-xl p-3.5">
+                  <p className="text-[11px] font-medium text-slate-500">{label as string}</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
+                    {Number(value) > 0 ? `₹${Number(value).toLocaleString("en-IN")}` : "Pending"}
+                  </p>
+                </div>
+              ))}
             </div>
-            <span className="rounded bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-rose-300 border border-rose-500/30">
-              AUDIT ACTIVE
-            </span>
-          </div>
 
-          <p className="text-xs text-rose-200/90 leading-relaxed max-w-3xl">
-            Our Policy-to-Payment Integrity Engine identified a <b>₹{variance.toLocaleString()} variance gap</b> between the statutory policy entitlement formula (₹{benefit.estimated_amount.toLocaleString()}) and the issued sanction order (₹{benefit.sanctioned_amount.toLocaleString()}).
-          </p>
+            <div className="mt-5 flex items-center justify-between border-t border-black/5 pt-4 dark:border-white/10 text-xs text-slate-500">
+              <span>Seeded DBT Account: <strong className="text-slate-800 dark:text-slate-200">{benefit.bankAccount}</strong></span>
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <ShieldCheck className="size-4" /> NPCI Active
+              </span>
+            </div>
+          </Card>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3">
-            <Link
-              href={`/farmer/grievances/new?scheme=${benefit.scheme_id}&variance=${variance}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-rose-500 hover:bg-rose-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition"
-            >
-              <MessageSquareWarning className="size-4" />
-              <span>File Official Grievance Ticket →</span>
-            </Link>
-
-            <Link
-              href="/farmer/applications/app-2"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-slate-200 transition"
-            >
-              <FileText className="size-4" />
-              <span>Inspect Application Dossier</span>
-            </Link>
-          </div>
+          <Card className="glass">
+            <h3 className="font-bold text-slate-900 dark:text-white">Disbursement Timeline</h3>
+            <div className="mt-5 space-y-4">
+              {benefit.timeline.map((item, i) => (
+                <div key={item.stage} className="flex items-start gap-3">
+                  <div className="mt-0.5 grid size-6 place-items-center rounded-full text-xs font-bold shrink-0">
+                    {item.completed ? (
+                      <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <Clock className="size-5 text-amber-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-semibold ${item.completed ? "text-slate-900 dark:text-white" : "text-amber-700 dark:text-amber-400"}`}>
+                      {item.stage}
+                    </p>
+                    <p className="text-xs text-slate-400">{item.date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
-      )}
+
+        {/* Right Column: Alerts and Actions */}
+        <div className="space-y-5">
+          {benefit.discrepancyNote ? (
+            <Card className="glass border-amber-500/30">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                <div>
+                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300">
+                    Discrepancy Detected
+                  </h4>
+                  <p className="mt-1 text-xs leading-5 text-amber-800 dark:text-amber-400">
+                    {benefit.discrepancyNote}
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href={`/farmer/grievances/new?scheme=${encodeURIComponent(benefit.name)}&ref=${benefit.code}`}
+                className="glass-btn glass-green mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white shadow"
+              >
+                Raise Grievance for this Record
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Card>
+          ) : (
+            <Card className="glass">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Ledger Reconciled
+                  </h4>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    All entitlement records and bank transactions for this scheme match verified state records.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <Card className="glass space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Record Metadata
+            </h4>
+            <dl className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <dt className="text-slate-400">Scheme ID</dt>
+                <dd className="font-semibold text-slate-700 dark:text-slate-200">{benefit.code}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-slate-400">Ledger Key</dt>
+                <dd className="font-mono text-slate-700 dark:text-slate-200">KT-{benefit.id}</dd>
+              </div>
+            </dl>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

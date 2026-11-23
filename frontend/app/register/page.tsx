@@ -1,261 +1,346 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, ShieldCheck, Sprout, UserCheck, Wheat } from "lucide-react";
-import React, { useState } from "react";
+import { ArrowLeft, Sprout, CheckCircle2, AlertCircle, RefreshCw, KeyRound, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { authApi } from "@/lib/api";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useTranslation } from "@/lib/i18n/context";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t, locale, language } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [otp, setOtp] = useState("123456");
+  const [otpSentNote, setOtpSentNote] = useState<string | null>(null);
 
-  // Form State
-  const [fullName, setFullName] = useState("Ramesh Kumar");
-  const [phone, setPhone] = useState("9876543210");
-  const [preferredLang, setPreferredLang] = useState("hi");
-  const [state, setState] = useState("Chhattisgarh");
-  const [district, setDistrict] = useState("Raipur");
-  const [block, setBlock] = useState("Arang");
-  const [village, setVillage] = useState("Khamtarai");
-  const [farmerCat, setFarmerCat] = useState("Small & Marginal");
-  const [cultivatorStatus, setCultivatorStatus] = useState("Sharecropper");
-  const [landAcres, setLandAcres] = useState(2.0);
-  const [crops, setCrops] = useState("Paddy, Kodo-Kutki");
+  // Initialize with a fresh unique test number to avoid 409 collisions
+  useEffect(() => {
+    generateNewNumber();
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await fetch("http://localhost:8000/api/v1/farmers/me", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName,
-          state,
-          district,
-          block,
-          village,
-          farmer_category: farmerCat,
-          cultivator_status: cultivatorStatus,
-          landholding_acres: Number(landAcres),
-          cultivated_area: Number(landAcres),
-          crops_json: JSON.stringify(crops.split(",").map((c) => c.trim())),
-        }),
-      }).catch(() => null);
-    } catch {
-      // ignore
-    }
-
-    setTimeout(() => {
-      setLoading(false);
-      router.push("/farmer/dashboard");
-    }, 400);
+  const generateNewNumber = () => {
+    const randomDigits = Math.floor(10000 + Math.random() * 90000);
+    const num = `98765${randomDigits}`;
+    setMobileNumber(num);
+    setError("");
+    setOtpSentNote(null);
   };
 
+  const handleSendOtp = async () => {
+    if (!mobileNumber || mobileNumber.length < 10) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    setError("");
+    try {
+      const res = await authApi.sendOtp(mobileNumber);
+      setOtp(res.demoOtp || "123456");
+      setOtpSentNote(`Demo OTP (${res.demoOtp || "123456"}) issued successfully! Valid for 5 minutes.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not send OTP.");
+    }
+  };
+
+  async function submitRegistration(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    const form = new FormData(event.currentTarget);
+    const enteredMobile = mobileNumber.trim();
+    const enteredOtp = otp.trim() || "123456";
+
+    try {
+      // Ensure OTP challenge exists in backend
+      await authApi.sendOtp(enteredMobile);
+
+      const registered = await authApi.register({
+        mobileNumber: enteredMobile,
+        otp: enteredOtp,
+        fullName: String(form.get("fullName") || "Ramesh Kumar"),
+        preferredLanguage: String(form.get("preferredLanguage") || "Hindi"),
+        state: String(form.get("state") || "Chhattisgarh"),
+        district: String(form.get("district") || "Raipur"),
+        block: String(form.get("block") || "Arang"),
+        village: String(form.get("village") || "Khamtarai"),
+        pincode: String(form.get("pincode") || "") || undefined,
+        farmerCategory: String(form.get("farmerCategory") || "Small & marginal farmer"),
+        cultivatorStatus: String(form.get("cultivatorStatus") || "Landowner"),
+        landholdingArea: Number(form.get("landholdingArea") || 2),
+      });
+
+      // Persist session locally
+      if (typeof window !== "undefined") {
+        localStorage.setItem("krishisetu_token", registered.accessToken);
+        localStorage.setItem("krishisetu_user", JSON.stringify(registered.user));
+        localStorage.setItem("krishisetu_farmer", JSON.stringify(registered.farmer));
+      }
+
+      setSuccess(`Farmer successfully registered! ID: ${registered.farmer.farmer_id}`);
+      setTimeout(() => {
+        router.push("/farmer/dashboard");
+      }, 1000);
+    } catch (cause) {
+      const msg = cause instanceof Error ? cause.message : "Registration failed.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const isAlreadyRegistered = error.toLowerCase().includes("already registered");
+
   return (
-    <main className="min-h-screen px-4 py-8 text-slate-100 relative">
-      <div className="mx-auto max-w-3xl space-y-6 relative z-10">
-        {/* Top Header */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition"
-          >
-            <ArrowLeft className="size-4" /> {t("common.backToHome")}
+    <main className="min-h-screen bg-[#F8FAF5] px-4 py-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-6 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-xl bg-[#166534] text-white">
+              <Sprout className="size-5" />
+            </span>
+            <span className="font-bold text-slate-900 dark:text-white">KrishiSetu</span>
           </Link>
-          <LanguageSwitcher showAudioPill={false} />
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link
+              href="/login"
+              className="glass glass-btn inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
+            >
+              <ArrowLeft className="size-3.5" /> Already registered? Log in
+            </Link>
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="glass-panel p-6 sm:p-10 space-y-8 border border-white/15 shadow-2xl">
-          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-6">
-            <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-slate-950 shadow-lg border border-white/30">
-              <Sprout className="size-6 text-slate-950" />
+        <section className="glass rounded-3xl p-5 sm:p-8 shadow-xl">
+          <div className="mb-7">
+            <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#166534]">
+              Farmer Onboarding
             </span>
-            <div>
-              <h1 className="text-2xl font-bold text-white font-display">
-                Create Farmer Entitlement Profile
-              </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Takes only 2 minutes. Configures deterministic eligibility for Central and State schemes.
-              </p>
-            </div>
+            <h1 className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-white">
+              Create your farmer profile
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Fields marked * are required. This system registers your profile in the decentralized agricultural registry.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 1. Identity & Contact */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-display flex items-center gap-2">
-                <span className="size-5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-xs flex items-center justify-center font-bold">1</span>
-                <span>Personal & Language Preference</span>
-              </h2>
+          <form onSubmit={submitRegistration}>
+            <div className="space-y-8">
+              {/* Personal Information */}
+              <fieldset>
+                <legend className="mb-4 text-base font-bold text-slate-900 dark:text-white">
+                  Personal information
+                </legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Full name *
+                    <input
+                      name="fullName"
+                      className="field mt-2"
+                      required
+                      defaultValue="Ramesh Kumar"
+                      placeholder="Enter legal name as per Aadhaar"
+                    />
+                  </label>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="sm:col-span-1">
-                  <label className="text-xs font-semibold text-slate-300">Full Name *</label>
-                  <input
-                    required
-                    className="field mt-1"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Mobile number *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={generateNewNumber}
+                        className="flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                      >
+                        <RefreshCw className="size-3" /> New number
+                      </button>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-3 size-4 text-slate-400" />
+                        <input
+                          name="mobileNumber"
+                          className="field pl-9 font-mono"
+                          required
+                          type="tel"
+                          value={mobileNumber}
+                          onChange={(e) => setMobileNumber(e.target.value)}
+                          placeholder="10-digit mobile number"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        className="glass glass-btn rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                      >
+                        Send OTP
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Demo OTP *
+                    </label>
+                    <div className="relative mt-2">
+                      <KeyRound className="absolute left-3 top-3 size-4 text-slate-400" />
+                      <input
+                        name="otp"
+                        className="field pl-9 font-mono tracking-widest"
+                        required
+                        inputMode="numeric"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="123456"
+                      />
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      Demo OTP is <strong>123456</strong> for testing.
+                    </p>
+                  </div>
+
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Preferred language *
+                    <select name="preferredLanguage" className="field mt-2">
+                      <option>Hindi</option>
+                      <option>English</option>
+                    </select>
+                  </label>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Mobile Number *</label>
-                  <input
-                    required
-                    type="tel"
-                    className="field mt-1 font-mono"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
+              </fieldset>
+
+              {otpSentNote && (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span>{otpSentNote}</span>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Preferred Language</label>
-                  <select
-                    className="field mt-1 cursor-pointer"
-                    value={preferredLang}
-                    onChange={(e) => setPreferredLang(e.target.value)}
-                  >
-                    <option value="hi" className="bg-[#07130B]">हिन्दी (Hindi)</option>
-                    <option value="cghi" className="bg-[#07130B]">छत्तीसगढ़ी (Chhattisgarhi)</option>
-                    <option value="en" className="bg-[#07130B]">English</option>
-                  </select>
+              )}
+
+              {/* Location Information */}
+              <fieldset className="border-t border-slate-200/60 pt-6 dark:border-white/10">
+                <legend className="mb-4 text-base font-bold text-slate-900 dark:text-white">
+                  Location information
+                </legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    State *
+                    <input name="state" className="field mt-2" required defaultValue="Chhattisgarh" />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    District *
+                    <input name="district" className="field mt-2" required defaultValue="Raipur" />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Block *
+                    <input name="block" className="field mt-2" required defaultValue="Arang" />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Village *
+                    <input name="village" className="field mt-2" required defaultValue="Khamtarai" />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    PIN code
+                    <input name="pincode" className="field mt-2" placeholder="492001" defaultValue="492001" />
+                  </label>
                 </div>
-              </div>
+              </fieldset>
+
+              {/* Farmer Information */}
+              <fieldset className="border-t border-slate-200/60 pt-6 dark:border-white/10">
+                <legend className="mb-4 text-base font-bold text-slate-900 dark:text-white">
+                  Farmer & Landholding details
+                </legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Farmer category *
+                    <select name="farmerCategory" className="field mt-2" required>
+                      <option>Small &amp; marginal farmer</option>
+                      <option>Medium farmer</option>
+                      <option>Large farmer</option>
+                      <option>Other farmer</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Cultivator status *
+                    <select name="cultivatorStatus" className="field mt-2" required>
+                      <option>Landowner</option>
+                      <option>Tenant farmer</option>
+                      <option>Sharecropper</option>
+                      <option>Joint landholder</option>
+                      <option>Other</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    KrishiSetu / existing Farmer ID
+                    <input className="field mt-2" placeholder="Optional (e.g. KS-CG-10482)" />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Landholding area (acres) *
+                    <input
+                      name="landholdingArea"
+                      className="field mt-2"
+                      required
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      defaultValue="2.0"
+                    />
+                  </label>
+                </div>
+              </fieldset>
             </div>
 
-            {/* 2. Geography */}
-            <div className="space-y-3 pt-3">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-display flex items-center gap-2">
-                <span className="size-5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-xs flex items-center justify-center font-bold">2</span>
-                <span>Administrative Geography (Location)</span>
-              </h2>
-
-              <div className="grid gap-4 sm:grid-cols-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">State *</label>
-                  <input
-                    required
-                    className="field mt-1"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">District *</label>
-                  <input
-                    required
-                    className="field mt-1"
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Block / Tehsil *</label>
-                  <input
-                    required
-                    className="field mt-1"
-                    value={block}
-                    onChange={(e) => setBlock(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Village *</label>
-                  <input
-                    required
-                    className="field mt-1"
-                    value={village}
-                    onChange={(e) => setVillage(e.target.value)}
-                  />
+            {error && (
+              <div className="mt-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs font-semibold text-rose-800 dark:text-rose-300">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle className="size-4 shrink-0 mt-0.5 text-rose-600" />
+                  <div className="flex-1">
+                    <p>{error}</p>
+                    {isAlreadyRegistered && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Link
+                          href="/login"
+                          className="glass-btn glass-green inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-white shadow"
+                        >
+                          Log in with {mobileNumber}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={generateNewNumber}
+                          className="glass glass-btn inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                        >
+                          <RefreshCw className="size-3" /> Generate Different Number
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* 3. Cultivator Identity Bridge */}
-            <div className="space-y-3 pt-3">
-              <h2 className="text-sm font-bold text-purple-300 uppercase tracking-wider font-display flex items-center gap-2">
-                <span className="size-5 rounded-full bg-purple-500/20 text-purple-400 font-mono text-xs flex items-center justify-center font-bold">3</span>
-                <span>Cultivator Identity Bridge (Land vs Cultivation)</span>
-              </h2>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Cultivator Status *</label>
-                  <select
-                    className="field mt-1 cursor-pointer"
-                    value={cultivatorStatus}
-                    onChange={(e) => setCultivatorStatus(e.target.value)}
-                  >
-                    <option value="Sharecropper" className="bg-[#07130B]">Sharecropper (बटाईदार / 50:50 Oral Lease)</option>
-                    <option value="Tenant" className="bg-[#07130B]">Tenant Farmer (पट्टेदार / Leaseholder)</option>
-                    <option value="Landowner" className="bg-[#07130B]">Landowner (भू-स्वामी)</option>
-                    <option value="Joint Owner" className="bg-[#07130B]">Joint Family Landholding</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Cultivated Area (Acres) *</label>
-                  <input
-                    required
-                    type="number"
-                    step="0.1"
-                    className="field mt-1 font-mono"
-                    value={landAcres}
-                    onChange={(e) => setLandAcres(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Farmer Category</label>
-                  <select
-                    className="field mt-1 cursor-pointer"
-                    value={farmerCat}
-                    onChange={(e) => setFarmerCat(e.target.value)}
-                  >
-                    <option value="Small & Marginal" className="bg-[#07130B]">Small & Marginal (&lt; 5 acres)</option>
-                    <option value="Medium" className="bg-[#07130B]">Medium Farmer (5–10 acres)</option>
-                    <option value="Large" className="bg-[#07130B]">Large Farmer (&gt; 10 acres)</option>
-                  </select>
-                </div>
+            {success && (
+              <div className="mt-6 flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                <CheckCircle2 className="size-4 shrink-0" />
+                <span>{success} Redirecting to your farmer dashboard...</span>
               </div>
+            )}
 
-              <div>
-                <label className="text-xs font-semibold text-slate-300">Major Crops Cultivated *</label>
-                <input
-                  required
-                  className="field mt-1"
-                  value={crops}
-                  onChange={(e) => setCrops(e.target.value)}
-                  placeholder="e.g. Paddy, Kodo-Kutki, Mustard"
-                />
-              </div>
-            </div>
-
-            {/* Privacy Guarantee Notice */}
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3.5 text-xs text-emerald-300 flex items-start gap-2.5">
-              <ShieldCheck className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-              <span>
-                KrishiSetu adheres strictly to MeitY AgriStack privacy standards. We do not store plaintext Aadhaar numbers, biometric PINs, or confidential banking passwords.
-              </span>
-            </div>
-
-            <div className="pt-2 flex items-center justify-between">
-              <Link href="/login" className="text-xs text-slate-400 hover:text-white">
-                Already registered? Sign In
-              </Link>
+            <div className="mt-8 flex justify-end">
               <button
-                type="submit"
                 disabled={loading}
-                className="btn-primary text-xs px-8 py-3 shadow-lg cursor-pointer"
+                type="submit"
+                className="glass-btn glass-green flex w-full items-center justify-center gap-2 rounded-2xl px-8 py-3.5 font-bold text-white shadow-lg disabled:opacity-60 sm:w-auto"
               >
-                {loading ? "Registering..." : "Create Profile & Explore Schemes →"}
+                {loading ? "Creating farmer profile..." : "Create farmer profile"}
               </button>
             </div>
           </form>
-        </div>
+        </section>
       </div>
     </main>
   );

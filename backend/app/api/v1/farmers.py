@@ -1,149 +1,73 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 
-from app.db import get_db
-from app.models.farmer import Farmer
-from app.models.user import User
-from app.schemas.farmer import FarmerResponse, FarmerUpdate
+from app.api.v1.auth import current_user, require_role, success
+from app.db.store import execute, many, one
 
 router = APIRouter(prefix="/farmers", tags=["farmers"])
 
 
-@router.get("/me", response_model=FarmerResponse)
-async def get_my_profile(db: AsyncSession = Depends(get_db)) -> FarmerResponse:
-    result = await db.execute(select(Farmer).join(User))
-    farmer = result.scalars().first()
-    if not farmer:
-        raise HTTPException(status_code=404, detail="Farmer profile not found")
-
-    user_result = await db.execute(select(User).where(User.id == farmer.user_id))
-    user = user_result.scalars().first()
-
-    return FarmerResponse(
-        id=farmer.id,
-        user_id=farmer.user_id,
-        farmer_id=farmer.farmer_id,
-        name=user.name if user else "Ramesh Kumar",
-        phone=user.phone if user else "9876543210",
-        state=farmer.state,
-        district=farmer.district,
-        block=farmer.block,
-        village=farmer.village,
-        pincode=farmer.pincode,
-        farmer_category=farmer.farmer_category,
-        cultivator_status=farmer.cultivator_status,
-        landholding_acres=farmer.landholding_acres,
-        cultivated_area=farmer.cultivated_area,
-        crops_json=farmer.crops_json,
-        farming_season=farmer.farming_season,
-        irrigation_type=farmer.irrigation_type,
-        profile_completion=farmer.profile_completion,
-    )
+class FarmerProfileUpdate(BaseModel):
+    fullName: str | None = Field(default=None, min_length=2, max_length=100)
+    state: str | None = None
+    district: str | None = None
+    block: str | None = None
+    village: str | None = None
+    pincode: str | None = None
+    cultivatorStatus: str | None = None
+    cultivatedArea: float | None = Field(default=None, ge=0)
+    crops: list[str] | None = None
 
 
-@router.put("/me", response_model=FarmerResponse)
-async def update_my_profile(update_data: FarmerUpdate, db: AsyncSession = Depends(get_db)) -> FarmerResponse:
-    result = await db.execute(select(Farmer).join(User))
-    farmer = result.scalars().first()
-    if not farmer:
-        raise HTTPException(status_code=404, detail="Farmer profile not found")
-
-    user_result = await db.execute(select(User).where(User.id == farmer.user_id))
-    user = user_result.scalars().first()
-
-    if update_data.name and user:
-        user.name = update_data.name
-
-    for field, val in update_data.model_dump(exclude_unset=True).items():
-        if field != "name" and hasattr(farmer, field):
-            setattr(farmer, field, val)
-
-    await db.commit()
-    await db.refresh(farmer)
-
-    return FarmerResponse(
-        id=farmer.id,
-        user_id=farmer.user_id,
-        farmer_id=farmer.farmer_id,
-        name=user.name if user else "Ramesh Kumar",
-        phone=user.phone if user else "9876543210",
-        state=farmer.state,
-        district=farmer.district,
-        block=farmer.block,
-        village=farmer.village,
-        pincode=farmer.pincode,
-        farmer_category=farmer.farmer_category,
-        cultivator_status=farmer.cultivator_status,
-        landholding_acres=farmer.landholding_acres,
-        cultivated_area=farmer.cultivated_area,
-        crops_json=farmer.crops_json,
-        farming_season=farmer.farming_season,
-        irrigation_type=farmer.irrigation_type,
-        profile_completion=farmer.profile_completion,
-    )
+@router.get("/me")
+async def own_profile(user: dict = Depends(require_role("farmer", "admin"))) -> dict:
+    user_row = one("SELECT * FROM users WHERE id=?", (user["id"],))
+    farmer = one("SELECT * FROM farmers WHERE id=?", (user["id"],))
+    return success({"user": user_row, "farmer": farmer}, "Farmer profile retrieved")
 
 
-@router.get("", response_model=list[FarmerResponse])
-async def list_farmers(db: AsyncSession = Depends(get_db)) -> list[FarmerResponse]:
-    result = await db.execute(select(Farmer))
-    farmers = result.scalars().all()
-
-    output = []
-    for f in farmers:
-        user_res = await db.execute(select(User).where(User.id == f.user_id))
-        u = user_res.scalars().first()
-        output.append(
-            FarmerResponse(
-                id=f.id,
-                user_id=f.user_id,
-                farmer_id=f.farmer_id,
-                name=u.name if u else "Farmer",
-                phone=u.phone if u else "N/A",
-                state=f.state,
-                district=f.district,
-                block=f.block,
-                village=f.village,
-                pincode=f.pincode,
-                farmer_category=f.farmer_category,
-                cultivator_status=f.cultivator_status,
-                landholding_acres=f.landholding_acres,
-                cultivated_area=f.cultivated_area,
-                crops_json=f.crops_json,
-                farming_season=f.farming_season,
-                irrigation_type=f.irrigation_type,
-                profile_completion=f.profile_completion,
-            )
-        )
-    return output
+@router.patch("/me")
+async def update_own_profile(payload: FarmerProfileUpdate, user: dict = Depends(require_role("farmer", "admin"))) -> dict:
+    if payload.fullName is not None:
+        execute("UPDATE users SET full_name=? WHERE id=?", (payload.fullName, user["id"]))
+    fields = {
+        "state": payload.state,
+        "district": payload.district,
+        "block": payload.block,
+        "village": payload.village,
+        "pincode": payload.pincode,
+        "cultivator_status": payload.cultivatorStatus,
+        "cultivated_area": payload.cultivatedArea,
+        "crops": None if payload.crops is None else __import__("json").dumps(payload.crops),
+    }
+    present = {key: value for key, value in fields.items() if value is not None}
+    if present:
+        set_clause = ",".join(f"{key}=?" for key in present)
+        execute(f"UPDATE farmers SET {set_clause} WHERE id=?", (*present.values(), user["id"]))
+    farmer = one("SELECT * FROM farmers WHERE id=?", (user["id"],))
+    return success({"user": one("SELECT * FROM users WHERE id=?", (user["id"],)), "farmer": farmer}, "Farmer profile updated")
 
 
-@router.get("/{farmer_id}", response_model=FarmerResponse)
-async def get_farmer_by_id(farmer_id: str, db: AsyncSession = Depends(get_db)) -> FarmerResponse:
-    result = await db.execute(select(Farmer).where((Farmer.farmer_id == farmer_id) | (Farmer.id == int(farmer_id) if farmer_id.isdigit() else False)))
-    f = result.scalars().first()
-    if not f:
-        raise HTTPException(status_code=404, detail="Farmer not found")
-
-    user_res = await db.execute(select(User).where(User.id == f.user_id))
-    u = user_res.scalars().first()
-    return FarmerResponse(
-        id=f.id,
-        user_id=f.user_id,
-        farmer_id=f.farmer_id,
-        name=u.name if u else "Farmer",
-        phone=u.phone if u else "N/A",
-        state=f.state,
-        district=f.district,
-        block=f.block,
-        village=f.village,
-        pincode=f.pincode,
-        farmer_category=f.farmer_category,
-        cultivator_status=f.cultivator_status,
-        landholding_acres=f.landholding_acres,
-        cultivated_area=f.cultivated_area,
-        crops_json=f.crops_json,
-        farming_season=f.farming_season,
-        irrigation_type=f.irrigation_type,
-        profile_completion=f.profile_completion,
-    )
+@router.get("/me/dashboard")
+async def farmer_dashboard(user: dict = Depends(require_role("farmer", "admin"))) -> dict:
+    farmer = one("SELECT * FROM farmers WHERE id=?", (user["id"],))
+    benefits = many("SELECT * FROM benefits WHERE farmer_id=?", (user["id"],))
+    applications = many("SELECT * FROM applications WHERE farmer_id=? ORDER BY submitted_at DESC", (user["id"],))
+    notifications = many("SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 10", (user["id"],))
+    discrepancies = many("SELECT * FROM discrepancies WHERE farmer_id=? AND status!='resolved'", (user["id"],))
+    potential = sum(float(row["expected_amount"] or 0) for row in benefits)
+    sanctioned = sum(float(row["sanctioned_amount"] or 0) for row in benefits)
+    received = sum(float(row["received_amount"] or 0) for row in benefits)
+    return success({
+        "farmer": farmer,
+        "financialOverview": {
+            "potentialBenefits": potential,
+            "sanctionedAmount": sanctioned,
+            "receivedAmount": received,
+            "applications": len(applications),
+            "pendingActions": len(discrepancies) + 1,
+        },
+        "applications": applications,
+        "notifications": notifications,
+        "isDemo": True,
+    }, "Farmer dashboard retrieved")

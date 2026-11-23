@@ -1,417 +1,148 @@
-"use client";
-
 import Link from "next/link";
-import {
-  ArrowRight,
-  Calculator,
-  CheckCircle2,
-  FileText,
-  Landmark,
-  Phone,
-  PhoneCall,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Sprout,
-  Users,
-  WalletCards,
-  Wheat,
-  Activity,
-  Layers,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowRight, Calculator, CheckCircle2, Landmark, Phone, Search, ShieldCheck, Sprout, UserPlus, WalletCards } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { VoiceAssistButton, StatusBadge } from "@/components/ui-kit";
-import { useTranslation } from "@/lib/i18n/context";
+import { CountUp, GlassCard, Reveal } from "@/components/motion";
+import { MediaBanner } from "@/components/media-banner";
+
+const features = [
+  { icon: Search, title: "Smart Scheme Discovery", hi: "सही योजना खोजें", text: "Central and Chhattisgarh schemes in one place.", span: "md:col-span-2" },
+  { icon: CheckCircle2, title: "Eligibility Checker", hi: "पात्रता जांचें", text: "Clear yes/no reasons, in plain words.", span: "" },
+  { icon: Calculator, title: "Loan & Subsidy Calculator", hi: "ऋण व सब्सिडी", text: "Estimate benefits with live sliders.", span: "" },
+  { icon: Landmark, title: "Application Tracking", hi: "आवेदन ट्रैक करें", text: "Every reference and status in one timeline.", span: "" },
+  { icon: Phone, title: "IVR Assistance", hi: "फ़ोन पर मदद", text: "Works on any basic mobile phone.", span: "" },
+];
+const steps = [
+  { icon: UserPlus, t: "Register", d: "Create your KrishiSetu Farmer ID in two minutes." },
+  { icon: Search, t: "Discover", d: "See schemes that fit your land and crops." },
+  { icon: CheckCircle2, t: "Check", d: "Know if you are eligible, and why." },
+  { icon: WalletCards, t: "Track", d: "Follow every rupee from potential to received." },
+];
+const pipeline = [["Potential", 42500], ["Applied", 36000], ["Approved", 30000], ["Sanctioned", 24000], ["Disbursed", 20000], ["Received", 18000]] as const;
+const schemes = [["PM-KISAN", "Income support", "₹6,000 / year"], ["PM Fasal Bima", "Crop insurance", "Up to ₹12,000"], ["Kisan Credit Card", "Agricultural credit", "Up to ₹24,500"], ["PM-KMY", "Pension support", "₹3,000 / month"]];
 
 export default function Home() {
-  const { t, locale, language } = useTranslation();
-
-  const heroAudio =
-    locale === "cghi"
-      ? "कृषि सेतु म आप सबो के स्वागत हे। केंद्र अऊ छत्तीसगढ़ के सरकारी योजना, कर्जा अऊ पईसा के पूरा हिसाब-किताब।"
-      : locale === "hi"
-        ? "कृषि सेतु: भारत का पहला कृषि अधिकार एवं हितलाभ पारदर्शिता मंच। अपनी पात्रता जांचें, योजनाओं का लाभ लें और हर रुपये का पारदर्शी हिसाब रखें।"
-        : "KrishiSetu: Next-generation agricultural entitlement intelligence and benefit transparency platform for Indian farmers.";
-
-  const features = [
-    {
-      icon: Search,
-      title: locale === "cghi" ? "योजना खोजव" : locale === "hi" ? "स्मार्ट योजना खोज" : "Smart Scheme Discovery",
-      text: locale === "cghi"
-        ? "केंद्र अऊ छत्तीसगढ़ सरकार के सबो योजना एक जगह खोजव।"
-        : locale === "hi"
-          ? "केंद्र और छत्तीसगढ़ राज्य की सभी कृषि योजनाएं अपनी पात्रता के अनुसार खोजें।"
-          : "Discover matching central and state schemes tailored to your crop and landholding profile.",
-      tag: "Verified Catalog",
-      badgeTone: "emerald",
-    },
-    {
-      icon: CheckCircle2,
-      title: locale === "cghi" ? "पक्का पात्रता जांच" : locale === "hi" ? "निश्चित पात्रता विश्लेषण" : "Deterministic Eligibility",
-      text: locale === "cghi"
-        ? "सरकारी नियम मुताबिक सही जांच, कोनो गलत अंदाज नई।"
-        : locale === "hi"
-          ? "सरकारी अधिसूचनाओं के नियमों पर आधारित शत-प्रतिशत निष्पक्ष जांच। कोई भ्रामक AI अनुमान नहीं।"
-          : "Rule-based programmatic evaluation against official clauses with zero AI hallucinations.",
-      tag: "Rule-Based",
-      badgeTone: "emerald",
-    },
-    {
-      icon: WalletCards,
-      title: locale === "cghi" ? "फाइनेंशियल डिजिटल ट्विन" : locale === "hi" ? "फाइनेंशियल डिजिटल ट्विन" : "Financial Digital Twin",
-      text: locale === "cghi"
-        ? "मिल सकत, मंजूर अऊ खाता म आए पईसा के अलग-अलग साफ हिसाब।"
-        : locale === "hi"
-          ? "संभावित, स्वीकृत एवं प्राप्त राशियों का पारदर्शी और पृथक खाता-बही।"
-          : "Consolidated benefit ledger maintaining strict separation between potential, sanctioned, and received funds.",
-      tag: "Core USP",
-      badgeTone: "amber",
-    },
-    {
-      icon: Calculator,
-      title: locale === "cghi" ? "कर्जा अऊ सब्सिडी हिसाब" : locale === "hi" ? "ऋण एवं सब्सिडी कैलकुलेटर" : "Loan & Subsidy Calculator",
-      text: locale === "cghi"
-        ? "केसीसी 4% ब्याज अऊ कृषि औजार म 50% छूट के पक्का हिसाब।"
-        : locale === "hi"
-          ? "केसीसी 4% शुद्ध ब्याज दर और कृषि यंत्रों पर 50% तक अनुदान की पारदर्शी गणना।"
-          : "Backend-computed KCC interest subvention, micro-irrigation, and machinery subsidies.",
-      tag: "Formulas",
-      badgeTone: "cyan",
-    },
-    {
-      icon: ShieldCheck,
-      title: locale === "cghi" ? "पईसा विसंगति जांच" : locale === "hi" ? "नीति-से-भुगतान सत्यनिष्ठा" : "Policy-to-Payment Integrity",
-      text: locale === "cghi"
-        ? "कम पईसा या देर होए म कारण जानव अऊ शिकायत करव।"
-        : locale === "hi"
-          ? "स्वीकृति आदेश और बैंक खाते में अंतर का पता लगाएं और निष्पक्ष जांच पाएं।"
-          : "Detects variances between policy entitlements, sanction orders, and bank disbursement records.",
-      tag: "Anti-Leakage",
-      badgeTone: "rose",
-    },
-    {
-      icon: Phone,
-      title: locale === "cghi" ? "सादा फोन म सेवा (IVR)" : locale === "hi" ? "आईवीआर फोन सहायता" : "Voice & IVR Telephony",
-      text: locale === "cghi"
-        ? "बिना इंटरनेट के सादा मोबाइल ले बटन दबाके सबो हाल जानव।"
-        : locale === "hi"
-          ? "स्मार्टफोन या इंटरनेट के बिना साधारण कीपैड फोन से पूरी जानकारी सुनें।"
-          : "Accessible telephone DTMF keypad interface for rural farmers with limited digital literacy.",
-      tag: "1800-890-SETU",
-      badgeTone: "amber",
-    },
-  ];
-
   return (
-    <main className="min-h-screen text-slate-100 relative">
-      {/* Top Floating Liquid Glass Navigation */}
-      <header className="sticky top-0 z-50 px-4 pt-3 sm:px-8">
-        <nav className="mx-auto flex h-18 max-w-7xl items-center justify-between rounded-2xl border border-white/10 bg-[#07130B]/80 px-6 backdrop-blur-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-slate-950 font-black shadow-lg shadow-emerald-500/25 border border-white/30">
-              <Sprout className="size-6 text-slate-950" />
-            </span>
-            <div>
-              <span className="block text-xl font-black tracking-tight text-white leading-none font-display">
-                KrishiSetu
-              </span>
-              <span className="text-[10px] font-bold text-emerald-400 tracking-wider font-mono">
-                कृषि सेतु · Transparency Platform
-              </span>
-            </div>
+    <main className="relative min-h-screen overflow-x-clip">
+      <nav className="sticky top-3 z-40 mx-auto mt-3 flex max-w-6xl items-center justify-between gap-2 px-3 sm:px-4">
+        <div className="glass flex w-full items-center justify-between rounded-full py-2 pl-3 pr-2 sm:pl-4">
+          <Link href="/" className="flex items-center gap-2.5">
+            <span className="grid size-10 place-items-center rounded-full bg-[#166534] text-white shadow-lg shadow-green-900/20"><Sprout className="size-5" /></span>
+            <span className="leading-4"><span className="block font-bold">KrishiSetu</span><span className="text-[11px] text-slate-500">कृषि सेतु</span></span>
           </Link>
-
-          <div className="flex items-center gap-3">
-            <LanguageSwitcher showAudioPill={true} />
-
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 hover:text-white hover:bg-white/10 transition"
-            >
-              Sign In
-            </Link>
-
-            <Link
-              href="/farmer/dashboard"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-xs font-extrabold text-slate-950 shadow-lg shadow-emerald-500/25 hover:from-emerald-400 hover:to-emerald-500 transition cursor-pointer"
-            >
-              <span>Explore Portal</span>
-              <ArrowRight className="size-3.5" />
-            </Link>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <LanguageSwitcher />
+            <Link href="/login" className="rounded-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white/60 sm:text-sm">Log in</Link>
+            <Link href="/register" className="glass-btn glass-green rounded-full px-4 py-2.5 text-xs font-semibold sm:text-sm">Register</Link>
           </div>
-        </nav>
-      </header>
+        </div>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="relative px-4 pt-12 pb-20 sm:px-8 max-w-7xl mx-auto">
-        <div className="grid gap-12 lg:grid-cols-12 items-center">
-          {/* Hero Left Column */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-bold text-emerald-300 backdrop-blur-md">
-              <Sparkles className="size-3.5 text-emerald-400 animate-pulse" />
-              <span>Problem Statement GT-01 · 36-Hour Hackathon</span>
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 sm:px-8 md:grid-cols-[1.05fr_.95fr] md:pt-24">
+        <div>
+          <Reveal><span className="glass inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold text-[#166534]"><ShieldCheck className="size-4" /> Transparent agricultural services</span></Reveal>
+          <Reveal delay={100}><h1 className="mt-6 text-5xl font-bold leading-[1.04] tracking-tight text-[#14301e] sm:text-7xl">Know Your Benefits.<br /><span className="bg-gradient-to-r from-[#166534] via-[#22a559] to-[#CA9A04] bg-clip-text text-transparent">Track Every Rupee.</span></h1></Reveal>
+          <Reveal delay={200}><p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">Discover government schemes, understand your agricultural benefits, track applications and access assistance through your phone.</p></Reveal>
+          <Reveal delay={300} className="mt-9 flex flex-wrap gap-3">
+            <Link href="/register" className="glass-btn glass-green pulse-ring inline-flex items-center gap-2 rounded-full px-7 py-4 text-sm font-semibold">Get Started <ArrowRight className="size-4" /></Link>
+            <a href="#features" className="glass-btn glass inline-flex items-center rounded-full px-7 py-4 text-sm font-semibold text-slate-800">Explore Features</a>
+          </Reveal>
+          <Reveal delay={400} className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+            {["English · हिंदी · छत्तीसगढ़ी", "Chhattisgarh focused", "Works on basic phones"].map((x) => <span key={x} className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#166534]" />{x}</span>)}
+          </Reveal>
+        </div>
+
+        <Reveal delay={200}>
+          <GlassCard tilt className="float-slow glass-strong p-5">
+            <div className="flex items-center justify-between border-b border-white/70 pb-4"><div><p className="text-xs text-slate-500">Demo farmer dashboard</p><p className="mt-1 font-bold">Ramesh Kumar</p></div><span className="rounded-full bg-green-100/80 px-3 py-1 text-xs font-bold text-[#166534]">85% complete</span></div>
+            <div className="grid grid-cols-2 gap-3 py-5">
+              <div className="glass-green rounded-2xl p-4"><p className="text-xs opacity-80">Potential Benefits</p><p className="mt-2 text-2xl font-bold"><CountUp to={42500} prefix="₹" /></p></div>
+              <div className="glass rounded-2xl p-4"><p className="text-xs text-slate-500">Confirmed Received</p><p className="mt-2 text-2xl font-bold"><CountUp to={18000} prefix="₹" /></p></div>
             </div>
-
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white font-display leading-[1.1]">
-                Do Not Just Tell a Farmer Which Scheme Exists.{" "}
-                <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 bg-clip-text text-transparent">
-                  Make Every Rupee Transparent.
-                </span>
-              </h1>
-              <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
-                {locale === "cghi"
-                  ? "कृषि सेतु ले अपन असली हक जानव। कोनो बिचौलिया नई, कोनो झूठ नई — सीधा सरकारी नियम अऊ बैंक खाता के पक्का हिसाब।"
-                  : locale === "hi"
-                    ? "भारत का पहला कृषि अधिकार बुद्धिमत्ता एवं लाभ पारदर्शिता मंच। छोटे, सीमांत, काश्तकार और बटाईदार किसानों के लिए शत-प्रतिशत निष्पक्ष विश्लेषण।"
-                    : "Next-generation agricultural policy, loan, and subsidy transparency platform. Connecting farmer identity, deterministic eligibility, benefit lifecycle tracking, and policy-to-payment integrity."}
-              </p>
+            <div className="space-y-2">
+              {[["PM-KISAN Income Support", "₹6,000", "Received"], ["PM Fasal Bima Yojana", "₹12,000", "Under review"], ["Kisan Credit Card", "₹24,500", "Potential"]].map(([n, a, s]) => (
+                <div key={n} className="flex items-center justify-between rounded-xl bg-white/60 px-3 py-3"><div><p className="text-sm font-semibold">{n}</p><p className="text-xs text-slate-500">{s}</p></div><p className="text-sm font-bold">{a}</p></div>
+              ))}
             </div>
+          </GlassCard>
+        </Reveal>
+      </section>
 
-            {/* CTA and Voice Actions */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link
-                href="/farmer/dashboard"
-                className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 px-6 py-3.5 text-sm font-extrabold text-slate-950 shadow-xl shadow-emerald-500/25 hover:scale-[1.02] transition cursor-pointer"
-              >
-                <span>{locale === "hi" ? "किसान पोर्टल में प्रवेश करें" : "Enter Farmer Portal"}</span>
-                <ArrowRight className="size-4" />
-              </Link>
-
-              <Link
-                href="/farmer/ivr"
-                className="inline-flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3.5 text-sm font-bold text-amber-300 hover:bg-amber-500/20 backdrop-blur-md transition cursor-pointer"
-              >
-                <PhoneCall className="size-4 text-amber-400" />
-                <span>IVR Demo (1800-890-SETU)</span>
-              </Link>
-
-              <VoiceAssistButton text={heroAudio} label={locale === "hi" ? "आवाज सुनें" : "Listen intro"} />
-            </div>
-
-            {/* Quick Stats Pill */}
-            <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Deterministic Rules (Zero LLM Hallucinations)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-emerald-400" />
-                <span>Cultivator Identity Bridge (Sharecroppers & Tenants)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-emerald-400" />
-                <span>Policy-to-Payment Forensic Audit</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Right Column: Interactive Liquid Glass Preview */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-md">
-              {/* Glowing Rim Background */}
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/30 to-amber-500/20 blur-xl opacity-75" />
-
-              {/* Glass Card Surface */}
-              <div className="relative glass-card p-6 space-y-5 border border-white/20 shadow-2xl">
-                {/* Farmer Live Dossier Header */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400">
-                      RK
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">Ramesh Kumar</p>
-                      <p className="text-[10px] font-mono text-emerald-400">KS-CG-10482 · Dharsiwa, Raipur</p>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/30">
-                    Active Cultivator
-                  </span>
-                </div>
-
-                {/* Financial Twin Lifecycle Glance */}
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-mono">Potential Entitlement</span>
-                    <p className="text-xl font-bold text-emerald-300 font-mono tabular-nums">₹42,500</p>
-                    <p className="text-[10px] text-slate-400">4 central/state schemes</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-mono">Disbursed to Bank</span>
-                    <p className="text-xl font-bold text-white font-mono tabular-nums">₹18,000</p>
-                    <p className="text-[10px] text-emerald-400">Aadhaar DBT confirmed</p>
-                  </div>
-                </div>
-
-                {/* Discrepancy Alert Peek */}
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold text-amber-300">
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="size-3.5 text-amber-400" />
-                      Policy-to-Payment Engine
-                    </span>
-                    <span className="text-[10px] text-amber-400 font-mono">Alert #alert-1</span>
-                  </div>
-                  <p className="text-[11px] text-amber-200/90 leading-tight">
-                    PMFBY claim variance: Entitled ₹12,000, sanctioned ₹8,000 (-₹4,000 gap flagged for inquiry).
-                  </p>
-                </div>
-
-                {/* One-click Action Links */}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <Link
-                    href="/farmer/benefits"
-                    className="rounded-xl border border-white/10 bg-white/[0.04] p-2.5 text-center text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
-                  >
-                    View Financial Twin →
-                  </Link>
-                  <Link
-                    href="/farmer/calculator"
-                    className="rounded-xl bg-emerald-500/20 border border-emerald-500/30 p-2.5 text-center text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition"
-                  >
-                    Try Calculator →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <Reveal><p className="text-xs font-bold uppercase tracking-[.18em] text-[#166534]">How it works</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Four simple steps</h2></Reveal>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((s, i) => (
+            <Reveal key={s.t} delay={i * 90}><GlassCard className="h-full p-6"><span className="grid size-12 place-items-center rounded-2xl bg-[#166534] text-white shadow-lg shadow-green-900/20"><s.icon className="size-5" /></span><p className="mt-1 text-xs font-bold text-[#CA9A04]">STEP {i + 1}</p><h3 className="mt-1 text-lg font-bold">{s.t}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{s.d}</p></GlassCard></Reveal>
+          ))}
         </div>
       </section>
 
-      {/* 6 Bento Grid Feature Capabilities */}
-      <section className="px-4 py-16 sm:px-8 max-w-7xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-          <p className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-            Engine Architecture
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-display">
-            Built for Transparency, Grounded in Real Data
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
-            A unified stack engineered to eliminate information asymmetry, administrative leakage, and digital illiteracy barriers.
-          </p>
-        </div>
+      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <Reveal>
+          <MediaBanner name="field" className="min-h-[320px]">
+            <div className="flex min-h-[320px] flex-col justify-end p-7 text-white sm:p-10">
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-green-200">Built for the field</p>
+              <h2 className="mt-2 max-w-xl text-3xl font-bold sm:text-4xl">From the village to the bank account, in your own language</h2>
+            </div>
+          </MediaBanner>
+        </Reveal>
+      </section>
 
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={i}
-                className="glass-card p-6 flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="grid size-11 place-items-center rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 group-hover:scale-105 transition-transform">
-                      <Icon className="size-5" />
-                    </span>
-                    <span className="rounded-full bg-white/5 border border-white/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-slate-300">
-                      {f.tag}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-bold text-white font-display">{f.title}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">{f.text}</p>
-                </div>
-
-                <div className="pt-4 border-t border-white/[0.06] mt-4 flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-slate-400 font-mono">Module {i + 1}</span>
-                  <Link
-                    href="/farmer/dashboard"
-                    className="inline-flex items-center gap-1 font-bold text-emerald-400 group-hover:underline text-xs"
-                  >
-                    <span>Launch</span>
-                    <ChevronRight className="size-3" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+      <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-12 sm:px-8">
+        <Reveal><p className="text-xs font-bold uppercase tracking-[.18em] text-[#166534]">One platform, complete visibility</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Everything a farmer needs</h2></Reveal>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {features.map((f, i) => (
+            <Reveal key={f.title} delay={i * 70} className={f.span}><GlassCard tilt className="h-full p-6"><span className="grid size-11 place-items-center rounded-2xl bg-white/80 text-[#166534] shadow"><f.icon className="size-5" /></span><h3 className="mt-4 font-bold">{f.title}</h3><p className="text-xs font-semibold text-[#166534]">{f.hi}</p><p className="mt-2 text-sm leading-6 text-slate-600">{f.text}</p></GlassCard></Reveal>
+          ))}
         </div>
       </section>
 
-      {/* Role Switcher Matrix */}
-      <section className="px-4 py-16 sm:px-8 max-w-7xl mx-auto">
-        <div className="glass-panel p-8 sm:p-12 space-y-8 border border-white/15">
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
-              Explore KrishiSetu by User Role
-            </h2>
-            <p className="text-xs text-slate-400">
-              Switch seamlessly between farmer, extension officer, and governance administrator views.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-3">
-            {/* Farmer Card */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/30 p-6 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-300">
-                  FARMER EXPERIENCE
-                </span>
-                <h3 className="text-lg font-bold text-white">Ramesh Kumar</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Mobile-first entitlement portal with voice readouts, Cultivator Identity Bridge for sharecroppers, and 6-stage lifecycle ledger.
-                </p>
-              </div>
-              <Link
-                href="/farmer/dashboard"
-                className="inline-flex items-center justify-center rounded-xl bg-emerald-500 py-2.5 px-4 text-xs font-bold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Open Farmer Workspace
-              </Link>
+      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <Reveal>
+          <GlassCard className="glass-strong p-6 sm:p-10">
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-[#166534]">Financial Digital Twin</p>
+            <h2 className="mt-2 max-w-xl text-3xl font-bold tracking-tight sm:text-4xl">See where every rupee is, from potential to received</h2>
+            <div className="mt-8 space-y-3">
+              {pipeline.map(([label, amt], i) => (
+                <div key={label} className="grid grid-cols-[88px_1fr_84px] items-center gap-3 text-sm sm:grid-cols-[110px_1fr_100px]">
+                  <span className="font-semibold text-slate-700">{label}</span>
+                  <div className="h-3.5 overflow-hidden rounded-full bg-white/70 shadow-inner"><div className={i === 5 ? "flow h-full rounded-full" : "h-full rounded-full bg-gradient-to-r from-[#86EFAC] to-[#166534]"} style={{ width: `${(amt / 42500) * 100}%` }} /></div>
+                  <span className="text-right font-bold tabular-nums">₹{amt.toLocaleString("en-IN")}</span>
+                </div>
+              ))}
             </div>
+            <p className="mt-5 text-xs text-slate-500">Sample demonstration data. Amounts are never shown as verified unless an authorised record confirms them.</p>
+          </GlassCard>
+        </Reveal>
+      </section>
 
-            {/* Officer Card */}
-            <div className="rounded-2xl border border-blue-500/30 bg-cyan-950/30 p-6 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <span className="rounded bg-cyan-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-cyan-300">
-                  OFFICER WORKBENCH
-                </span>
-                <h3 className="text-lg font-bold text-white">Anita Verma (RAEO)</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Operational intelligence platform for verifying cultivator declarations, investigating payment variances, and resolving grievances.
-                </p>
-              </div>
-              <Link
-                href="/officer/dashboard"
-                className="inline-flex items-center justify-center rounded-xl bg-cyan-500 py-2.5 px-4 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition"
-              >
-                Open Officer Desk
-              </Link>
-            </div>
-
-            {/* Admin Card */}
-            <div className="rounded-2xl border border-purple-500/30 bg-purple-950/30 p-6 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <span className="rounded bg-purple-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-purple-300">
-                  GOVERNANCE ADMIN
-                </span>
-                <h3 className="text-lg font-bold text-white">System Administrator</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Platform administration: statutory scheme catalog, Scheme Change Impact Radar with clause diffing, and security audit logs.
-                </p>
-              </div>
-              <Link
-                href="/admin/dashboard"
-                className="inline-flex items-center justify-center rounded-xl bg-purple-500 py-2.5 px-4 text-xs font-bold text-white hover:bg-purple-400 transition"
-              >
-                Open Governance Admin
-              </Link>
-            </div>
-          </div>
+      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <Reveal><h2 className="text-3xl font-bold tracking-tight">Featured schemes</h2></Reveal>
+        <div className="mt-6 flex snap-x gap-4 overflow-x-auto pb-4">
+          {schemes.map(([n, t, b]) => (
+            <Link key={n} href="/farmer/schemes" className="snap-start"><GlassCard tilt className="w-64 shrink-0 p-5"><p className="text-xs font-semibold text-slate-500">{t}</p><p className="mt-1 text-lg font-bold">{n}</p><p className="mt-6 font-bold text-[#166534]">{b}</p></GlassCard></Link>
+          ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/[0.08] px-4 py-8 sm:px-8 text-center text-xs text-slate-500 space-y-2">
-        <p className="font-semibold text-slate-400">
-          KrishiSetu · Agricultural Entitlement Intelligence & Benefit Transparency Platform
-        </p>
-        <p className="text-[11px]">
-          Problem Statement GT-01 · Open Source Public Good Architecture · Built with Next.js, FastAPI & SQLite
-        </p>
+      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+        <Reveal>
+          <div className="glass-green flex flex-col items-start justify-between gap-6 rounded-[32px] p-7 sm:flex-row sm:items-center sm:p-10">
+            <div><p className="text-sm font-semibold text-green-100">Phone assistance available</p><h2 className="mt-2 text-2xl font-bold sm:text-3xl">Use KrishiSetu even with a basic mobile phone</h2></div>
+            <Link href="/farmer/ivr" className="glass-btn inline-flex items-center gap-2 rounded-full bg-[#EAB308] px-6 py-3.5 font-bold text-slate-900 shadow-lg"><Phone className="size-4" /> View IVR Guide</Link>
+          </div>
+        </Reveal>
+      </section>
+
+      <footer className="relative mt-10">
+        <svg aria-hidden className="pointer-events-none absolute inset-x-0 bottom-full h-24 w-full text-[#166534]/20" viewBox="0 0 1200 100" preserveAspectRatio="none">
+          {Array.from({ length: 60 }).map((_, i) => <path key={i} className="field-sway" style={{ animationDelay: `${-(i % 7) * 0.6}s`, transformOrigin: `${i * 20 + 10}px 100px` }} d={`M${i * 20 + 10} 100 Q${i * 20 + 6} ${50 - (i % 5) * 6} ${i * 20 + 12} ${14 + (i % 4) * 8}`} stroke="currentColor" strokeWidth="2.4" fill="none" strokeLinecap="round" />)}
+        </svg>
+        <div className="glass rounded-none border-x-0 border-b-0">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-7 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <p>© 2026 KrishiSetu. Demonstration platform.</p>
+            <div className="flex gap-5"><Link href="/login">Login</Link><Link href="/register">Register</Link></div>
+          </div>
+        </div>
       </footer>
     </main>
   );

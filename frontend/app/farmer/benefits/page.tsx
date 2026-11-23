@@ -1,211 +1,275 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  IndianRupee,
-  Landmark,
-  ShieldCheck,
-  Volume2,
-  WalletCards,
-  Info,
-} from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { Card, PageHeading, StatCard, StatusBadge, VoiceAssistButton } from "@/components/ui-kit";
-import { useTranslation } from "@/lib/i18n/context";
-import { getBenefits, getBenefitSummary } from "@/lib/api";
+import { IndianRupee, WalletCards, ArrowRight, CheckCircle2, AlertTriangle, ShieldCheck, Filter } from "lucide-react";
+import { DemoBanner } from "@/components/demo-banner";
+import { Card, PageHeading, StatCard, StatusBadge } from "@/components/ui-kit";
+import { TwinPipeline } from "@/components/twin-pipeline";
+
+interface BenefitRecordItem {
+  id: string;
+  name: string;
+  category: string;
+  code: string;
+  estimatedAmount: number;
+  appliedAmount: number;
+  approvedAmount: number;
+  sanctionedAmount: number;
+  disbursedAmount: number;
+  receivedAmount: number;
+  status: "Potential" | "Applied" | "Approved" | "Sanctioned" | "Disbursed" | "Received";
+  updatedAt: string;
+  bankAccount: string;
+  notes: string;
+}
+
+const BENEFIT_RECORDS: BenefitRecordItem[] = [
+  {
+    id: "benefit-1",
+    name: "PM-KISAN Samman Nidhi",
+    category: "Income support",
+    code: "BF-CG-001",
+    estimatedAmount: 6000,
+    appliedAmount: 6000,
+    approvedAmount: 6000,
+    sanctionedAmount: 6000,
+    disbursedAmount: 6000,
+    receivedAmount: 6000,
+    status: "Received",
+    updatedAt: "22 Nov 2026",
+    bankAccount: "SBI •••• 4892",
+    notes: "Installment #16 credited via NPCI DBT mandate.",
+  },
+  {
+    id: "benefit-2",
+    name: "PM Fasal Bima Yojana",
+    category: "Crop insurance",
+    code: "BF-CG-002",
+    estimatedAmount: 12000,
+    appliedAmount: 12000,
+    approvedAmount: 12000,
+    sanctionedAmount: 0,
+    disbursedAmount: 0,
+    receivedAmount: 0,
+    status: "Approved",
+    updatedAt: "20 Nov 2026",
+    bankAccount: "SBI •••• 4892",
+    notes: "Yield assessment approved; sanction voucher pending issuance.",
+  },
+  {
+    id: "benefit-3",
+    name: "Kisan Credit Card Subvention",
+    category: "Agricultural credit",
+    code: "BF-CG-003",
+    estimatedAmount: 24500,
+    appliedAmount: 20000,
+    approvedAmount: 18000,
+    sanctionedAmount: 18000,
+    disbursedAmount: 12000,
+    receivedAmount: 12000,
+    status: "Sanctioned",
+    updatedAt: "18 Nov 2026",
+    bankAccount: "SBI •••• 4892",
+    notes: "Prompt repayment 3% interest relief credited by district cooperative bank.",
+  },
+  {
+    id: "benefit-4",
+    name: "Micro-Irrigation Subsidy (PMKSY)",
+    category: "Irrigation grant",
+    code: "BF-CG-004",
+    estimatedAmount: 35000,
+    appliedAmount: 35000,
+    approvedAmount: 0,
+    sanctionedAmount: 0,
+    disbursedAmount: 0,
+    receivedAmount: 0,
+    status: "Applied",
+    updatedAt: "15 Nov 2026",
+    bankAccount: "SBI •••• 4892",
+    notes: "Application under technical verification by assistant engineer.",
+  },
+  {
+    id: "benefit-5",
+    name: "Agricultural Mechanization (SMAM)",
+    category: "Farm implements",
+    code: "BF-CG-005",
+    estimatedAmount: 50000,
+    appliedAmount: 0,
+    approvedAmount: 0,
+    sanctionedAmount: 0,
+    disbursedAmount: 0,
+    receivedAmount: 0,
+    status: "Potential",
+    updatedAt: "10 Nov 2026",
+    bankAccount: "SBI •••• 4892",
+    notes: "Identified based on 2-acre landholding category and farm equipment eligibility.",
+  },
+];
+
+const FILTERS = ["All", "Potential", "Applied", "Approved", "Sanctioned", "Disbursed", "Received"] as const;
 
 export default function BenefitsPage() {
-  const { t, locale, speak, language } = useTranslation();
-  const [benefits, setBenefits] = useState<any[]>([]);
-  const [summary, setSummary] = useState<any>(null);
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeFilter, setActiveFilter] = useState<string>("All");
 
-  useEffect(() => {
-    getBenefits(activeFilter).then(setBenefits);
-    getBenefitSummary().then(setSummary);
+  const filteredRecords = useMemo(() => {
+    if (activeFilter === "All") return BENEFIT_RECORDS;
+    return BENEFIT_RECORDS.filter(
+      (b) => b.status.toLowerCase() === activeFilter.toLowerCase(),
+    );
   }, [activeFilter]);
 
-  const s = summary || {
-    total_potential: 42500,
-    total_applied: 36500,
-    total_approved: 30000,
-    total_sanctioned: 26000,
-    total_disbursed: 24000,
-    total_received: 18000,
-  };
-
-  const filters = [
-    "All",
-    "POTENTIAL",
-    "APPLIED",
-    "APPROVED",
-    "SANCTIONED",
-    "DISBURSED",
-    "RECEIVED",
-  ];
-
-  const handleAudioSummary = () => {
-    const text =
-      locale === "cghi"
-        ? `फाइनेंशियल डिजिटल ट्विन: संभावित फायदा ₹${s.total_potential.toLocaleString("en-IN")}। खाता म जमा ₹${s.total_received.toLocaleString("en-IN")}।`
-        : locale === "hi"
-          ? `फाइनेंशियल डिजिटल ट्विन: संभावित लाभ ₹${s.total_potential.toLocaleString("en-IN")}। बैंक खाते में जमा ₹${s.total_received.toLocaleString("en-IN")}।`
-          : `Financial Digital Twin summary: Potential entitlement is ₹${s.total_potential.toLocaleString("en-IN")}. Confirmed received is ₹${s.total_received.toLocaleString("en-IN")}.`;
-    speak(text);
-  };
+  // Totals
+  const totalPotential = BENEFIT_RECORDS.reduce((s, b) => s + b.estimatedAmount, 0);
+  const totalApplied = BENEFIT_RECORDS.reduce((s, b) => s + b.appliedAmount, 0);
+  const totalApproved = BENEFIT_RECORDS.reduce((s, b) => s + b.approvedAmount, 0);
+  const totalSanctioned = BENEFIT_RECORDS.reduce((s, b) => s + b.sanctionedAmount, 0);
+  const totalDisbursed = BENEFIT_RECORDS.reduce((s, b) => s + b.disbursedAmount, 0);
+  const totalReceived = BENEFIT_RECORDS.reduce((s, b) => s + b.receivedAmount, 0);
 
   return (
     <div className="space-y-6">
+      <DemoBanner />
+
       <PageHeading
-        title={t("benefits.title")}
-        description={
-          language === "hi"
-            ? "संभावित, स्वीकृत एवं प्राप्त राशियों का पारदर्शी और पृथक खाता-बही। भ्रामक अनुमानों और वास्तविक बैंक भुगतान में स्पष्ट भेद।"
-            : "Consolidated benefit ledger maintaining strict separation between potential entitlements, approved claims, and confirmed bank credits."
-        }
-        action={
-          <VoiceAssistButton
-            text={`Financial Digital Twin. Potential entitlement: ₹${s.total_potential}. Received confirmed: ₹${s.total_received}.`}
-            label={locale === "hi" || locale === "cghi" ? "खाता-बही सारांश सुनें" : "Listen Ledger"}
-          />
-        }
+        title="Financial Digital Twin & Benefit Ledger"
+        description="Immutable single-pane ledger mapping potential entitlements to verified bank disbursements"
       />
 
-      {/* 6 Lifecycle Stage Stat Cards — Golden Rule: Never Merge Into One Deceptive Total! */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      {/* Metric Cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
-          label={t("benefits.stagePotential")}
-          value={`₹${s.total_potential.toLocaleString()}`}
-          detail="Calculated entitlement"
+          label="Potential"
+          value={`₹${(totalPotential / 1000).toFixed(1)}K`}
+          detail="Identified entitlements"
           icon={<WalletCards className="size-5" />}
-          tone="green"
         />
         <StatCard
-          label={t("benefits.stageApplied")}
-          value={`₹${s.total_applied.toLocaleString()}`}
-          detail="Filed in claims"
+          label="Applied"
+          value={`₹${(totalApplied / 1000).toFixed(1)}K`}
+          detail="In review"
           icon={<IndianRupee className="size-5" />}
           tone="blue"
         />
         <StatCard
-          label={t("benefits.stageApproved")}
-          value={`₹${s.total_approved.toLocaleString()}`}
-          detail="Officer cleared"
-          icon={<CheckCircle2 className="size-5" />}
-          tone="green"
+          label="Approved"
+          value={`₹${(totalApproved / 1000).toFixed(1)}K`}
+          detail="Authorized"
+          icon={<IndianRupee className="size-5" />}
         />
         <StatCard
-          label={t("benefits.stageSanctioned")}
-          value={`₹${s.total_sanctioned.toLocaleString()}`}
-          detail="Authorized order"
-          icon={<Landmark className="size-5" />}
+          label="Sanctioned"
+          value={`₹${(totalSanctioned / 1000).toFixed(1)}K`}
+          detail="Order issued"
+          icon={<IndianRupee className="size-5" />}
           tone="yellow"
         />
         <StatCard
-          label={t("benefits.stageDisbursed")}
-          value={`₹${s.total_disbursed.toLocaleString()}`}
-          detail="PFMS payment batch"
-          icon={<Clock className="size-5" />}
-          tone="slate"
+          label="Disbursed"
+          value={`₹${(totalDisbursed / 1000).toFixed(1)}K`}
+          detail="In transit"
+          icon={<IndianRupee className="size-5" />}
         />
         <StatCard
-          label={t("benefits.stageReceived")}
-          value={`₹${s.total_received.toLocaleString()}`}
+          label="Received"
+          value={`₹${(totalReceived / 1000).toFixed(1)}K`}
           detail="In bank account"
-          icon={<IndianRupee className="size-5" />}
-          tone="green"
+          icon={<CheckCircle2 className="size-5" />}
         />
       </div>
 
-      {/* Benefits Ledger Section */}
-      <div className="glass-panel p-6 sm:p-7 space-y-6 border border-white/10">
-        {/* Filter Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-white/[0.08] pb-4">
-          {filters.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition cursor-pointer shrink-0 ${
-                activeFilter === filter
-                  ? "bg-emerald-500 text-slate-950 shadow-md font-extrabold"
-                  : "border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10"
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
+      {/* Digital Twin Stage Pipeline */}
+      <div className="glass rounded-2xl p-5">
+        <TwinPipeline />
+      </div>
+
+      {/* Ledger Section with Interactive Filters */}
+      <Card className="glass">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/5 pb-4 dark:border-white/10">
+          <div>
+            <h3 className="font-bold text-slate-900 dark:text-white">
+              Farmer Benefit Records ({filteredRecords.length})
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Filter records by stage in the disbursement lifecycle
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <Filter className="size-3.5 text-slate-400 mr-1" />
+            {FILTERS.map((filter) => {
+              const count =
+                filter === "All"
+                  ? BENEFIT_RECORDS.length
+                  : BENEFIT_RECORDS.filter((b) => b.status === filter).length;
+              return (
+                <button
+                  key={filter}
+                  onClick={() => setActiveFilter(filter)}
+                  className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    activeFilter === filter
+                      ? "glass-btn glass-green text-white shadow-sm"
+                      : "glass hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
+                >
+                  {filter} ({count})
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Benefit Records Grid */}
-        <div className="grid gap-5 lg:grid-cols-2">
-          {benefits.map((b) => (
+        {/* Cards Grid */}
+        <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRecords.map((record) => (
             <Link
-              key={b.id}
-              href={`/farmer/benefits/${b.id}`}
-              className="glass-card p-5 hover:border-emerald-500/40 transition-all flex flex-col justify-between group"
+              key={record.id}
+              href={`/farmer/benefits/${record.id}`}
+              className="glass glass-btn relative flex flex-col justify-between rounded-2xl p-4.5 text-left transition hover:shadow-xl"
             >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                      {b.scheme_category || "Entitlement"}
+                    <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-400">
+                      {record.category} · {record.code}
                     </span>
-                    <h3 className="mt-1 text-lg font-bold text-white group-hover:text-emerald-300 transition font-display">
-                      {b.scheme_name || b.scheme_id}
-                    </h3>
+                    <h4 className="mt-1 font-bold text-slate-900 dark:text-white">
+                      {record.name}
+                    </h4>
                   </div>
-                  <StatusBadge status={b.status} />
+                  <StatusBadge status={record.status} />
                 </div>
 
-                <p className="text-xs text-slate-400 font-mono">{b.installment_info}</p>
+                <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                  <div className="glass rounded-xl p-2.5">
+                    <dt className="text-[11px] text-slate-400">Estimated</dt>
+                    <dd className="mt-0.5 font-bold text-slate-800 dark:text-slate-100">
+                      ₹{record.estimatedAmount.toLocaleString("en-IN")}
+                    </dd>
+                  </div>
+                  <div className="glass rounded-xl p-2.5">
+                    <dt className="text-[11px] text-slate-400">Recorded</dt>
+                    <dd className="mt-0.5 font-bold text-emerald-700 dark:text-emerald-400">
+                      ₹{(record.receivedAmount || record.sanctionedAmount || record.approvedAmount || record.appliedAmount).toLocaleString("en-IN")}
+                    </dd>
+                  </div>
+                </dl>
 
-                {/* Amount Matrix */}
-                <div className="grid grid-cols-3 gap-2.5 rounded-xl bg-white/[0.02] border border-white/[0.08] p-3 text-center text-xs">
-                  <div>
-                    <p className="text-[10px] font-mono uppercase text-slate-400">Estimated</p>
-                    <p className="mt-1 text-sm font-extrabold text-white font-mono tabular-nums">
-                      ₹{b.estimated_amount.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-mono uppercase text-slate-400">Sanctioned</p>
-                    <p className="mt-1 text-sm font-extrabold text-amber-300 font-mono tabular-nums">
-                      ₹{b.sanctioned_amount.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-mono uppercase text-emerald-400">Received</p>
-                    <p className="mt-1 text-sm font-extrabold text-emerald-300 font-mono tabular-nums">
-                      ₹{b.received_amount.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Sanction Mismatch Callout */}
-                {b.sanctioned_amount > 0 && b.sanctioned_amount < b.estimated_amount && (
-                  <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/30 p-2.5 text-xs font-semibold text-rose-300">
-                    <AlertTriangle className="size-4 text-rose-400 shrink-0" />
-                    <span>
-                      Integrity Alert: ₹{(b.estimated_amount - b.sanctioned_amount).toLocaleString()} variance detected
-                    </span>
-                  </div>
-                )}
+                <p className="mt-3 text-[11px] leading-4 text-slate-500">
+                  {record.notes}
+                </p>
               </div>
 
-              <div className="pt-4 border-t border-white/[0.06] mt-4 flex items-center justify-between text-xs text-slate-400">
-                <span className="font-mono text-[11px]">Updated: {b.last_action_date}</span>
-                <span className="font-bold text-emerald-400 group-hover:underline flex items-center gap-1">
-                  Inspect Lifecycle Journey →
+              <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-3 dark:border-white/10 text-[11px] text-slate-400">
+                <span>Updated {record.updatedAt}</span>
+                <span className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
+                  Inspect Record <ArrowRight className="size-3" />
                 </span>
               </div>
             </Link>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

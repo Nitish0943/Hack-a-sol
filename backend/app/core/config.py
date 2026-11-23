@@ -7,7 +7,10 @@ class Settings(BaseSettings):
     app_name: str = "KrishiSetu API"
     app_version: str = "1.0.0"
     app_environment: str = "development"
-    frontend_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    frontend_origins: str = "http://localhost:3000"
+    demo_otp_enabled: bool = True
+    demo_otp: str = "123456"
+    database_path: str = "./krishisetu.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,191 +1,236 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Filter, ClipboardCheck, ArrowRight, Clock, CheckCircle2, AlertCircle, FileText, X } from "lucide-react";
-import { Card, PageHeading, StatusBadge, VoiceAssistButton } from "@/components/ui-kit";
-import { getApplications, createApplication, getSchemes } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n/context";
+import { Plus, Search, Filter, ArrowRight, FileCheck, CheckCircle2, Clock, Send, AlertCircle } from "lucide-react";
+import { Card, PageHeading, StatusBadge } from "@/components/ui-kit";
+import { applicationsApi } from "@/lib/api";
+
+interface ApplicationItem {
+  id: string;
+  schemeName: string;
+  schemeId: string;
+  applicationNumber: string;
+  submittedAt: string;
+  status: "Draft" | "Submitted" | "Under review" | "Documents required" | "Approved" | "Completed";
+  remarks?: string;
+}
+
+const INITIAL_APPLICATIONS: ApplicationItem[] = [
+  {
+    id: "app-101",
+    schemeName: "PM-KISAN Samman Nidhi",
+    schemeId: "pm-kisan",
+    applicationNumber: "KS-2026-10482",
+    submittedAt: "12 Nov 2026",
+    status: "Approved",
+    remarks: "Land revenue records verified by Revenue Inspector (Patwari).",
+  },
+  {
+    id: "app-102",
+    schemeName: "PM Fasal Bima Yojana",
+    schemeId: "pmfby",
+    applicationNumber: "CG-PMFBY-8821",
+    submittedAt: "08 Nov 2026",
+    status: "Under review",
+    remarks: "Awaiting remote sensing satellite yield report.",
+  },
+  {
+    id: "app-103",
+    schemeName: "Kisan Credit Card Crop Loan",
+    schemeId: "kcc",
+    applicationNumber: "KCC-77421",
+    submittedAt: "29 Oct 2026",
+    status: "Documents required",
+    remarks: "Upload current season cropping pattern declaration.",
+  },
+];
 
 export default function ApplicationsPage() {
-  const { t, language } = useTranslation();
-  const [applications, setApplications] = useState<any[]>([]);
-  const [schemes, setSchemes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("All");
+  const [applications, setApplications] = useState<ApplicationItem[]>(INITIAL_APPLICATIONS);
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  // New application form state
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedScheme, setSelectedScheme] = useState("pm-kisan");
-  const [referenceNumber, setReferenceNumber] = useState("");
-  const [channel, setChannel] = useState("Common Service Centre (CSC)");
+  const [customRef, setCustomRef] = useState(`KS-2026-${Math.floor(10000 + Math.random() * 90000)}`);
   const [remarks, setRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [toastNote, setToastNote] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const [apps, schs] = await Promise.all([getApplications(), getSchemes()]);
-      setApplications(apps);
-      setSchemes(schs);
-      setLoading(false);
-    }
-    loadData();
-  }, []);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!referenceNumber.trim()) return;
-    setSubmitting(true);
-    const newApp = await createApplication({
-      scheme_id: selectedScheme,
-      reference_number: referenceNumber,
-      channel,
-      remarks,
-    });
-    setApplications([newApp, ...applications]);
-    setSubmitting(false);
-    setShowModal(false);
-    setReferenceNumber("");
-    setRemarks("");
+  const schemeNames: Record<string, string> = {
+    "pm-kisan": "PM-KISAN Samman Nidhi",
+    "kcc": "Kisan Credit Card Crop Loan",
+    "pmfby": "PM Fasal Bima Yojana",
+    "pmksy": "PM Krishi Sinchayee Yojana (Micro-Irrigation)",
+    "smam": "Sub-Mission on Agricultural Mechanization",
   };
 
-  const filtered = applications.filter((app) => {
-    const matchesFilter = filter === "All" || app.status === filter;
-    const matchesSearch =
-      app.scheme_name.toLowerCase().includes(search.toLowerCase()) ||
-      app.reference_number.toLowerCase().includes(search.toLowerCase());
-    return matchesFilter && matchesSearch;
+  const handleCreateApplication = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setToastNote(null);
+
+    const newApp: ApplicationItem = {
+      id: `app-${Date.now()}`,
+      schemeName: schemeNames[selectedScheme] || "Agricultural Scheme",
+      schemeId: selectedScheme,
+      applicationNumber: customRef || `KS-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+      submittedAt: "Today, Just now",
+      status: "Submitted",
+      remarks: remarks || "Application submitted via KrishiSetu portal.",
+    };
+
+    try {
+      await applicationsApi.create({
+        schemeId: selectedScheme,
+        applicationNumber: newApp.applicationNumber,
+        remarks: newApp.remarks,
+      });
+      setToastNote(`Application ${newApp.applicationNumber} created and recorded in system.`);
+    } catch {
+      setToastNote(`Application ${newApp.applicationNumber} recorded locally.`);
+    } finally {
+      setApplications([newApp, ...applications]);
+      setSubmitting(false);
+      setModalOpen(false);
+      setCustomRef(`KS-2026-${Math.floor(10000 + Math.random() * 90000)}`);
+      setRemarks("");
+    }
+  };
+
+  const filteredApps = applications.filter((app) => {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchesName = app.schemeName.toLowerCase().includes(q);
+      const matchesRef = app.applicationNumber.toLowerCase().includes(q);
+      if (!matchesName && !matchesRef) return false;
+    }
+    if (statusFilter !== "All" && app.status.toLowerCase() !== statusFilter.toLowerCase()) {
+      return false;
+    }
+    return true;
   });
 
-  const counts = {
-    total: applications.length,
-    underReview: applications.filter((a) => a.status === "Under review").length,
-    approved: applications.filter((a) => a.status === "Approved").length,
-    pendingAction: applications.filter((a) => a.status === "Documents required").length,
-  };
-
-  const audioSummary = `${t("application_tracking")}. ${language === "hi" ? "कुल आवेदन" : "Total applications"}: ${counts.total}. ${language === "hi" ? "समीक्षाधीन" : "Under review"}: ${counts.underReview}. ${language === "hi" ? "स्वीकृत" : "Approved"}: ${counts.approved}.`;
+  const total = applications.length;
+  const underReview = applications.filter((a) => a.status === "Under review" || a.status === "Submitted").length;
+  const approved = applications.filter((a) => a.status === "Approved").length;
+  const docsRequired = applications.filter((a) => a.status === "Documents required").length;
 
   return (
     <div className="space-y-6">
       <PageHeading
-        title={t("application_tracking")}
-        description={
-          language === "hi"
-            ? "सरकारी योजनाओं के अपने सभी आवेदनों की स्थिति और प्रगति देखें।"
-            : "Monitor official application dossiers, field verification steps, and issuance progress."
-        }
+        title="Application Tracking & Submissions"
+        description="Monitor status, review required actions, and submit new scheme applications"
         action={
-          <div className="flex items-center gap-3">
-            <VoiceAssistButton text={audioSummary} label={language === "hi" ? "आवेदन सुनें" : "Listen summary"} />
-            <button
-              onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#166534] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#14532d]"
-            >
-              <Plus className="size-4" />
-              {language === "hi" ? "नया आवेदन जोड़ें" : "Record Application"}
-            </button>
-          </div>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="glass-btn glass-green inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow"
+          >
+            <Plus className="size-4" />
+            Add New Application
+          </button>
         }
       />
 
-      {/* Metrics */}
+      {toastNote && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{toastNote}</span>
+        </div>
+      )}
+
+      {/* Counters Grid */}
       <div className="grid gap-3 sm:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-xs font-medium text-slate-500">{language === "hi" ? "कुल आवेदन" : "Total Applications"}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{counts.total}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-amber-500">
-          <p className="text-xs font-medium text-slate-500">{language === "hi" ? "समीक्षाधीन" : "Under Review"}</p>
-          <p className="mt-1 text-2xl font-bold text-amber-700">{counts.underReview}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-emerald-500">
-          <p className="text-xs font-medium text-slate-500">{language === "hi" ? "स्वीकृत" : "Approved"}</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-700">{counts.approved}</p>
-        </Card>
-        <Card className="p-4 border-l-4 border-l-blue-500">
-          <p className="text-xs font-medium text-slate-500">{language === "hi" ? "दस्तावेज़ अपेक्षित" : "Action Required"}</p>
-          <p className="mt-1 text-2xl font-bold text-blue-700">{counts.pendingAction}</p>
-        </Card>
+        {[
+          ["Total Applications", total, "All recorded"],
+          ["Pending Review", underReview, "In progress"],
+          ["Approved", approved, "Sanction ready"],
+          ["Action Needed", docsRequired, "Documents requested"],
+        ].map(([label, val, note]) => (
+          <Card key={label as string} className="glass p-4">
+            <p className="text-xs text-slate-400">{label as string}</p>
+            <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">
+              {val as number}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">{note as string}</p>
+          </Card>
+        ))}
       </div>
 
-      {/* Filter and Search Bar */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-1.5">
-            {["All", "Under review", "Approved", "Documents required"].map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilter(s)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                  filter === s
-                    ? "bg-[#166534] text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {s === "All" ? (language === "hi" ? "सभी" : "All") : s}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+      {/* Search and Filters */}
+      <Card className="glass">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/5 pb-4 dark:border-white/10">
+          <div className="relative min-w-[260px] flex-1">
+            <Search className="absolute left-3 top-3 size-4 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={language === "hi" ? "योजना या संदर्भ सं. खोजें..." : "Search scheme or ref..."}
-              className="w-full rounded-xl border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-xs outline-none focus:border-[#166534]"
+              placeholder="Search by reference or scheme name..."
+              className="field pl-9 text-xs"
             />
           </div>
-        </div>
-      </Card>
 
-      {/* Applications Table */}
-      <Card>
-        <div className="table-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+            <Filter className="size-3.5 text-slate-400 mr-1" />
+            {["All", "Under review", "Documents required", "Approved"].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setStatusFilter(filter)}
+                className={`rounded-lg px-3 py-1.5 font-semibold transition ${
+                  statusFilter === filter
+                    ? "glass-btn glass-green text-white shadow-sm"
+                    : "glass hover:bg-black/5 dark:hover:bg-white/5"
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Applications Table */}
+        <div className="table-wrap mt-4">
           <table>
             <thead>
               <tr>
-                <th>{language === "hi" ? "योजना का नाम" : "Scheme"}</th>
-                <th>{language === "hi" ? "आवेदन संदर्भ" : "Reference No."}</th>
-                <th>{language === "hi" ? "प्रस्तुत तिथि" : "Submission Date"}</th>
-                <th>{language === "hi" ? "माध्यम" : "Channel"}</th>
-                <th>{language === "hi" ? "स्थिति" : "Status"}</th>
-                <th>{language === "hi" ? "कार्रवाई" : "Action"}</th>
+                <th>Scheme Name</th>
+                <th>Reference ID</th>
+                <th>Submission Date</th>
+                <th>Status</th>
+                <th>Remarks</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {filteredApps.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
-                    {language === "hi" ? "कोई आवेदन नहीं मिला।" : "No applications found."}
+                  <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
+                    No applications match the current filter.
                   </td>
                 </tr>
               ) : (
-                filtered.map((app) => (
-                  <tr key={app.id} className="hover:bg-slate-50/50">
-                    <td className="font-semibold text-slate-900">
-                      <div className="flex items-center gap-2">
-                        <FileText className="size-4 text-[#166534]" />
-                        <span>{app.scheme_name}</span>
-                      </div>
+                filteredApps.map((app) => (
+                  <tr key={app.id}>
+                    <td className="font-semibold text-slate-900 dark:text-white">
+                      {app.schemeName}
                     </td>
-                    <td className="font-mono text-xs font-medium text-slate-700">{app.reference_number}</td>
-                    <td className="text-slate-600">{app.submission_date}</td>
-                    <td className="text-slate-600">{app.channel}</td>
+                    <td className="font-mono text-xs">{app.applicationNumber}</td>
+                    <td className="text-xs text-slate-500">{app.submittedAt}</td>
                     <td>
                       <StatusBadge status={app.status} />
+                    </td>
+                    <td className="max-w-[220px] truncate text-xs text-slate-500">
+                      {app.remarks || "—"}
                     </td>
                     <td>
                       <Link
                         href={`/farmer/applications/${app.id}`}
-                        className="inline-flex items-center gap-1 font-semibold text-[#166534] hover:underline text-xs"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                       >
-                        {language === "hi" ? "विवरण देखें" : "View Dossier"}
-                        <ArrowRight className="size-3" />
+                        Inspect <ArrowRight className="size-3" />
                       </Link>
                     </td>
                   </tr>
@@ -197,97 +242,94 @@ export default function ApplicationsPage() {
       </Card>
 
       {/* Add Application Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">
-                {language === "hi" ? "नया आवेदन दर्ज करें" : "Record Government Application"}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="glass w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-black/5 pb-3 dark:border-white/10">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Add Scheme Application
               </h3>
               <button
-                onClick={() => setShowModal(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                onClick={() => setModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                <X className="size-5" />
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="mt-4 space-y-4">
+            <form onSubmit={handleCreateApplication} className="mt-4 space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  {language === "hi" ? "योजना चुनें" : "Select Scheme"}
+                <label htmlFor="scheme-select" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Select Scheme
                 </label>
                 <select
+                  id="scheme-select"
+                  aria-label="Select Scheme"
                   value={selectedScheme}
                   onChange={(e) => setSelectedScheme(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none focus:border-[#166534]"
+                  className="field mt-1.5 text-xs font-medium"
                 >
-                  {schemes.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
+                  <option value="pm-kisan">PM-KISAN Samman Nidhi</option>
+                  <option value="kcc">Kisan Credit Card (KCC)</option>
+                  <option value="pmfby">PM Fasal Bima Yojana</option>
+                  <option value="pmksy">PM Krishi Sinchayee Yojana</option>
+                  <option value="smam">Sub-Mission on Agri-Mechanization</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  {language === "hi" ? "आधिकारिक पावती / संदर्भ संख्या" : "Official Reference / Acknowledgement Number"}
+                <label htmlFor="ref-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Application Reference Number
                 </label>
                 <input
+                  id="ref-input"
+                  aria-label="Application Reference Number"
                   type="text"
+                  value={customRef}
+                  onChange={(e) => setCustomRef(e.target.value)}
                   required
-                  placeholder="e.g. KS-2026-98124 or CG-PMFBY-4412"
-                  value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none focus:border-[#166534]"
+                  className="field mt-1.5 text-xs font-mono"
                 />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Auto-generated or match your official receipt reference.
+                </p>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  {language === "hi" ? "आवेदन का माध्यम" : "Submission Channel"}
-                </label>
-                <select
-                  value={channel}
-                  onChange={(e) => setChannel(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none focus:border-[#166534]"
-                >
-                  <option value="Common Service Centre (CSC)">Common Service Centre (CSC / Lok Seva Kendra)</option>
-                  <option value="Direct Online Portal">Direct Online Portal (pmkisan.gov.in / pmfby.gov.in)</option>
-                  <option value="Primary Agricultural Cooperative (PACS)">Primary Agricultural Cooperative (PACS / Samiti)</option>
-                  <option value="Bank Branch">Commercial / Regional Gramin Bank Branch</option>
-                  <option value="Tehsil / Agriculture Office">Tehsil Office / RAEO Desk</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  {language === "hi" ? "अतिरिक्त विवरण / टिप्पणी" : "Additional Remarks"}
+                <label htmlFor="remarks-textarea" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Notes & Supporting Details
                 </label>
                 <textarea
-                  rows={3}
+                  id="remarks-textarea"
+                  aria-label="Notes & Supporting Details"
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
-                  placeholder={language === "hi" ? "दस्तावेज़ जमा करने की जानकारी लिखें..." : "e.g. Physical B1 and Aadhaar passbook copy handed to operator."}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm outline-none focus:border-[#166534]"
+                  placeholder="e.g. Applied at CSC center with Khasra documents..."
+                  className="field mt-1.5 min-h-20 text-xs"
                 />
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  onClick={() => setModalOpen(false)}
+                  className="glass glass-btn rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300"
                 >
-                  {language === "hi" ? "रद्द करें" : "Cancel"}
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="rounded-xl bg-[#166534] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#14532d] disabled:opacity-50"
+                  className="glass-btn glass-green inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow"
                 >
-                  {submitting ? (language === "hi" ? "सहेज रहे हैं..." : "Saving...") : (language === "hi" ? "दर्ज करें" : "Save Record")}
+                  {submitting ? (
+                    <span>Registering...</span>
+                  ) : (
+                    <>
+                      <Send className="size-3.5" />
+                      Submit Application
+                    </>
+                  )}
                 </button>
               </div>
             </form>
