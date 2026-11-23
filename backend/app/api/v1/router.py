@@ -9,6 +9,7 @@ from app.api.v1.engines import router as engines_router
 from app.api.v1.operations import router as operations_router
 from app.api.v1.officer_admin import router as officer_admin_router
 from app.api.v1.ivr import router as ivr_router
+from app.api.v1.voice import router as voice_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(status_router)
@@ -20,4 +21,4 @@ api_router.include_router(engines_router)
 api_router.include_router(operations_router)
 api_router.include_router(officer_admin_router)
 api_router.include_router(ivr_router)
-api_router.include_router(ivr_router)
+api_router.include_router(voice_router)

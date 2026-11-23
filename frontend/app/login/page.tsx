@@ -8,9 +8,9 @@ import { authApi } from "@/lib/api";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 const roles = [
-  { id: "farmer", label: "Farmer", hi: "किसान", icon: Tractor },
-  { id: "officer", label: "Officer", hi: "अधिकारी", icon: Building2 },
-  { id: "admin", label: "Admin", hi: "प्रशासक", icon: UserCog },
+  { id: "farmer", label: "Farmer", hi: "किसान", icon: Tractor, phone: "9876543210" },
+  { id: "officer", label: "Officer", hi: "अधिकारी", icon: Building2, phone: "9876500001" },
+  { id: "admin", label: "Admin", hi: "प्रशासक", icon: UserCog, phone: "9876500002" },
 ];
 const home = (r: string) => (r === "officer" ? "/officer/dashboard" : r === "admin" ? "/admin/dashboard" : "/farmer/dashboard");
 
@@ -22,26 +22,69 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const boxes = useRef<(HTMLInputElement | null)[]>([]);
-  const [otp, setOtp] = useState("123456");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const otp = digits.join("");
 
+  const handleRoleSelect = (rId: string) => {
+    setRole(rId);
+    const target = roles.find((r) => r.id === rId);
+    const isStandardDemoPhone = roles.some((r) => r.phone === mobileNumber.trim());
+    if (target && (isStandardDemoPhone || !mobileNumber.trim())) {
+      setMobileNumber(target.phone);
+    }
+  };
+
   async function continueLogin() {
-    setError(""); setLoading(true);
+    setError("");
+    setLoading(true);
+    const cleanMobile = mobileNumber.replace(/\D/g, "").slice(-10);
+    if (!cleanMobile || cleanMobile.length < 10) {
+      setError("Please enter a valid 10-digit mobile number.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      if (step === "phone") { await authApi.sendOtp(mobileNumber); setStep("otp"); }
-      else { await authApi.verifyOtp(mobileNumber, otp, role); router.push(home(role)); }
+      if (step === "phone") {
+        await authApi.sendOtp(cleanMobile);
+        setStep("otp");
+      } else {
+        const res = await authApi.verifyOtp(cleanMobile, otp, role);
+        if (typeof window !== "undefined" && res.accessToken) {
+          localStorage.setItem("krishisetu_token", res.accessToken);
+          localStorage.setItem("krishisetu_user", JSON.stringify(res.user));
+        }
+        router.push(home(role));
+      }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Demo authentication failed.");
-    } finally { setLoading(false); }
+      setError(cause instanceof Error ? cause.message : "Authentication failed.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function demoLogin(r: string) {
-    setError(""); setLoading(true);
-    try { await authApi.sendOtp("9876543210"); await authApi.verifyOtp("9876543210", "123456", r); router.push(home(r)); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "Demo authentication failed."); setLoading(false); }
+    setError("");
+    setLoading(true);
+    try {
+      let res: { accessToken: string; user: { role: string; full_name?: string } };
+      try {
+        res = await authApi.demoLogin(r as "farmer" | "officer" | "admin");
+      } catch {
+        const demoPhone = r === "officer" ? "9876500001" : r === "admin" ? "9876500002" : "9876543210";
+        await authApi.sendOtp(demoPhone);
+        res = await authApi.verifyOtp(demoPhone, "123456", r);
+      }
+      if (typeof window !== "undefined" && res.accessToken) {
+        localStorage.setItem("krishisetu_token", res.accessToken);
+        localStorage.setItem("krishisetu_user", JSON.stringify(res.user));
+      }
+      router.push(home(r));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Demo authentication failed.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function setDigit(i: number, v: string) {
@@ -49,22 +92,6 @@ export default function LoginPage() {
     if (d.length > 1) { const next = d.slice(0, 6).padEnd(6, " ").split(""); setDigits(next.map((x) => x.trim())); boxes.current[Math.min(d.length, 5)]?.focus(); return; }
     setDigits((p) => p.map((x, k) => (k === i ? d : x)));
     if (d && i < 5) boxes.current[i + 1]?.focus();
-  async function continueLogin() {
-    setError("");
-    setLoading(true);
-    try {
-      if (step === "phone") {
-        await authApi.sendOtp(mobileNumber);
-        setStep("otp");
-      } else {
-        await authApi.verifyOtp(mobileNumber, otp, role);
-        router.push(role === "officer" ? "/officer/dashboard" : role === "admin" ? "/admin/dashboard" : "/farmer/dashboard");
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Demo authentication failed.");
-    } finally {
-      setLoading(false);
-    }
   }
 
   return (
@@ -96,7 +123,7 @@ export default function LoginPage() {
             {step === "phone" ? (<>
               <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Role">
                 {roles.map((r) => (
-                  <button key={r.id} role="radio" aria-checked={role === r.id} onClick={() => setRole(r.id)} className={`glass-btn flex flex-col items-center gap-1 rounded-2xl px-2 py-3 text-xs font-semibold ${role === r.id ? "glass-green" : "glass"}`}>
+                  <button key={r.id} role="radio" aria-checked={role === r.id} onClick={() => handleRoleSelect(r.id)} className={`glass-btn flex flex-col items-center gap-1 rounded-2xl px-2 py-3 text-xs font-semibold ${role === r.id ? "glass-green" : "glass"}`}>
                     <r.icon className="size-5" />{r.label}<span className="text-[10px] opacity-70">{r.hi}</span>
                   </button>
                 ))}
@@ -111,19 +138,6 @@ export default function LoginPage() {
             )}
             {error && <p className="rounded-2xl bg-red-50/80 px-3 py-2 text-sm text-red-700">{error}</p>}
             <button disabled={loading} onClick={continueLogin} className="glass-btn glass-green w-full rounded-full px-4 py-4 font-semibold disabled:opacity-60">{loading ? "Please wait..." : step === "phone" ? "Send OTP" : "Verify & continue"}</button>
-      <section className="flex items-center justify-center p-5">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center justify-between">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" /> Back to home</Link>
-            <LanguageSwitcher />
-          </div>
-          <h1 className="text-3xl font-bold">{step === "phone" ? "Welcome back" : "Verify your number"}</h1>
-          <p className="mt-2 text-sm text-slate-500">{step === "phone" ? "Choose a demo role and enter your mobile number." : "Enter the demo OTP 123456."}</p>
-          <div className="mt-7 space-y-5">
-            {step === "phone" && <div><label className="mb-2 block text-sm font-semibold">Demo role</label><select className="field" value={role} onChange={(event) => setRole(event.target.value)}><option value="farmer">Farmer</option><option value="officer">Government Officer</option><option value="admin">Administrator</option></select></div>}
-            {step === "phone" ? <div><label className="mb-2 block text-sm font-semibold">Mobile number</label><div className="flex"><span className="grid place-items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-50 px-3 text-sm">+91</span><input className="field rounded-l-none" type="tel" value={mobileNumber} onChange={(event)=>setMobileNumber(event.target.value)} /></div></div> : <div><label className="mb-2 block text-sm font-semibold">One-time password</label><input className="field text-center text-xl tracking-[0.6em]" inputMode="numeric" value={otp} onChange={(event)=>setOtp(event.target.value)} /></div>}
-            {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-            <button disabled={loading} onClick={continueLogin} className="w-full rounded-xl bg-[#166534] px-4 py-3 font-semibold text-white disabled:opacity-60">{loading ? "Please wait..." : step === "phone" ? "Send OTP" : "Verify & continue"}</button>
             {step === "otp" && <button onClick={() => setStep("phone")} className="w-full text-center text-sm font-semibold text-[#166534]">Change number</button>}
           </div>
 

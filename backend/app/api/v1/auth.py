@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
@@ -18,6 +19,10 @@ class VerifyOtpRequest(BaseModel):
     mobileNumber: str = Field(min_length=10, max_length=15)
     otp: str = Field(min_length=4, max_length=8)
     role: str = "farmer"
+
+
+class DemoLoginRequest(BaseModel):
+    role: Literal["farmer", "officer", "admin"]
 
 
 class ProfileUpdate(BaseModel):
@@ -125,6 +130,36 @@ async def verify_otp(payload: VerifyOtpRequest, response: Response) -> dict[str,
     )
     execute("DELETE FROM otp_challenges WHERE mobile_number=?", (payload.mobileNumber,))
     return success({"accessToken": token, "user": user}, "OTP verified")
+
+
+@router.post("/demo-login")
+async def demo_login(payload: DemoLoginRequest, response: Response) -> dict[str, object]:
+    settings = get_settings()
+    if not settings.demo_login_enabled or settings.app_environment.lower() == "production":
+        raise HTTPException(status_code=404, detail="Demo login is unavailable")
+
+    seed_demo_data()
+    user = one(
+        "SELECT * FROM users WHERE role=? AND is_active=1 ORDER BY created_at,id LIMIT 1",
+        (payload.role,),
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="No demo account is configured for this role")
+
+    token = secrets.token_urlsafe(32)
+    execute("INSERT INTO sessions(token,user_id) VALUES(?,?)", (token, user["id"]))
+    response.set_cookie(
+        "krishisetu_session",
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=60 * 60 * 8,
+    )
+    return success(
+        {"accessToken": token, "user": user, "isDemo": True},
+        "Demo account signed in",
+    )
 
 
 @router.post("/register")

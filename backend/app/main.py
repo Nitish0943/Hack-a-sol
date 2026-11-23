@@ -1,13 +1,15 @@
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
+from app.api.v1.voice import incoming_call
 from app.core.config import get_settings
 from app.schemas.status import HealthResponse, WelcomeResponse
-from app.db.store import initialize_database, seed_demo_data
+from app.db.store import cleanup_voice_records, initialize_database, seed_demo_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,17 +20,31 @@ app = FastAPI(
     version=settings.app_version,
     description="KrishiSetu agricultural policy, benefit and grievance API.",
 )
+cors_origins = list(dict.fromkeys([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    *settings.cors_origins,
+]))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=cors_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 app.include_router(api_router)
 
 
-from fastapi.exceptions import HTTPException, RequestValidationError
+@app.get("/ivr", include_in_schema=False)
+@app.post("/ivr", include_in_schema=False)
+async def legacy_ivr_incoming_call(request: Request) -> Response:
+    return await incoming_call(request)
+
 
 @app.on_event("startup")
 async def startup() -> None:

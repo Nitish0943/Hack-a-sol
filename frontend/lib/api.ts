@@ -4,6 +4,9 @@ import type {
   FarmerQueryResponse,
   RAGStatusResponse,
   SchemesListResponse,
+  VoiceCall,
+  VoiceEscalation,
+  VoiceServiceStatus,
 } from "@/types/api";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
@@ -37,13 +40,18 @@ export async function queryPolicyRAG(
 ): Promise<FarmerQueryResponse> {
   let response: Response;
 
+  const normalizedPayload = {
+    ...payload,
+    language: payload.language === "hne" ? "chg" : payload.language,
+  };
+
   try {
     response = await fetch(`${API_BASE_URL}/api/v1/rag/query`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizedPayload),
       cache: "no-store",
       signal,
     });
@@ -125,27 +133,35 @@ export async function apiRequest<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
-    ...options,
-    credentials: "include",
-    headers,
-  });
-
-  let result: any = null;
+  let response: Response;
   try {
-    result = await response.json();
+    response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
+      ...options,
+      credentials: "include",
+      headers,
+    });
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
+    throw new Error(
+      `Could not connect to KrishiSetu backend at ${API_BASE_URL}. Please ensure the server is running on port 8000.`
+    );
+  }
+
+  let result: Record<string, unknown> | null = null;
+  try {
+    result = (await response.json()) as Record<string, unknown>;
   } catch {
     // Non-JSON response
   }
 
   if (!response.ok || (result && result.success === false)) {
-    let errorMessage = "The KrishiSetu request failed.";
+    let errorMessage = `The KrishiSetu request failed (HTTP ${response.status}).`;
     if (result) {
       if (typeof result.detail === "string") {
         errorMessage = result.detail;
       } else if (Array.isArray(result.detail) && result.detail.length > 0) {
-        const first = result.detail[0];
-        errorMessage = first?.msg || first?.message || JSON.stringify(first);
+        const first = result.detail[0] as Record<string, unknown> | undefined;
+        errorMessage = String(first?.msg || first?.message || JSON.stringify(first));
       } else if (typeof result.message === "string") {
         errorMessage = result.message;
       }
@@ -154,19 +170,6 @@ export async function apiRequest<T>(
   }
 
   return (result?.data !== undefined ? result.data : result) as T;
-  const response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-  const result = (await response.json()) as ApiEnvelope<T>;
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "The KrishiSetu request failed.");
-  }
-  return result.data;
 }
 
 export const authApi = {
@@ -176,11 +179,25 @@ export const authApi = {
       body: JSON.stringify({ mobileNumber }),
     }),
   verifyOtp: (mobileNumber: string, otp: string, role: string) =>
-    apiRequest<{ accessToken: string; user: { role: string; full_name?: string } }>("/auth/verify-otp", {
-    apiRequest<{ accessToken: string; user: { role: string } }>("/auth/verify-otp", {
+    apiRequest<{ accessToken: string; user: { id: string; role: string; full_name?: string } }>("/auth/verify-otp", {
       method: "POST",
       body: JSON.stringify({ mobileNumber, otp, role }),
     }),
+  demoLogin: (role: "farmer" | "officer" | "admin") =>
+    apiRequest<{
+      accessToken: string;
+      user: { id: string; role: string; full_name?: string };
+      isDemo: boolean;
+    }>("/auth/demo-login", {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    }),
+  logout: () =>
+    apiRequest<{ loggedOut: boolean }>("/auth/logout", {
+      method: "POST",
+    }),
+  me: () =>
+    apiRequest<{ user: Record<string, unknown>; farmer?: Record<string, unknown> }>("/auth/me"),
   register: (payload: {
     mobileNumber: string;
     otp: string;
@@ -201,6 +218,51 @@ export const authApi = {
       farmer: { farmer_id: string };
     }>("/auth/register", {
       method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};
+
+export interface FarmerDashboardData {
+  user?: {
+    id: string;
+    full_name: string;
+    mobile_number: string;
+    role: string;
+  };
+  farmer?: {
+    farmer_id: string;
+    district: string;
+    village: string;
+    state: string;
+    block?: string;
+    pincode?: string;
+    cultivator_status: string;
+    cultivated_area: number;
+    crops: string;
+    profile_completion: number;
+    farmer_category: string;
+  };
+  financialOverview?: {
+    potentialBenefits: number;
+    sanctionedAmount: number;
+    receivedAmount: number;
+    applications: number;
+    pendingActions: number;
+  };
+  benefits?: Array<Record<string, unknown>>;
+  applications?: Array<Record<string, unknown>>;
+  discrepancies?: Array<Record<string, unknown>>;
+  notifications?: Array<Record<string, unknown>>;
+  recommendedSchemes?: Array<Record<string, unknown>>;
+  isDemo?: boolean;
+}
+
+export const farmersApi = {
+  dashboard: () => apiRequest<FarmerDashboardData>("/farmers/me/dashboard"),
+  me: () => apiRequest<{ user: Record<string, unknown>; farmer: Record<string, unknown> }>("/farmers/me"),
+  update: (payload: Record<string, unknown>) =>
+    apiRequest<{ user: Record<string, unknown>; farmer: Record<string, unknown> }>("/farmers/me", {
+      method: "PATCH",
       body: JSON.stringify(payload),
     }),
 };
@@ -277,7 +339,7 @@ export const calculatorApi = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  history: () => apiRequest<any[]>("/calculator/history"),
+  history: () => apiRequest<Record<string, unknown>[]>("/calculator/history"),
 };
 
 export interface EligibilityResult {
@@ -298,8 +360,8 @@ export const eligibilityApi = {
       method: "POST",
       body: JSON.stringify({ schemeId, farmerInputs }),
     }),
-  results: () => apiRequest<any[]>("/eligibility/results"),
-  get: (resultId: string) => apiRequest<any>(`/eligibility/results/${resultId}`),
+  results: () => apiRequest<Record<string, unknown>[]>("/eligibility/results"),
+  get: (resultId: string) => apiRequest<Record<string, unknown>>(`/eligibility/results/${resultId}`),
 };
 
 export interface BenefitSummary {
@@ -334,7 +396,7 @@ export interface BenefitRecord {
 export const benefitsApi = {
   summary: () => apiRequest<BenefitSummary>("/benefits/summary"),
   list: () => apiRequest<BenefitRecord[]>("/benefits"),
-  get: (id: string) => apiRequest<{ benefit: BenefitRecord; discrepancies: any[] }>(`/benefits/${id}`),
+  get: (id: string) => apiRequest<{ benefit: BenefitRecord; discrepancies: Record<string, unknown>[] }>(`/benefits/${id}`),
 };
 
 export interface ApplicationRecord {
@@ -362,7 +424,7 @@ export const applicationsApi = {
       method: "POST",
     }),
   get: (applicationId: string) =>
-    apiRequest<{ application: ApplicationRecord; history: any[] }>(`/applications/${applicationId}`),
+    apiRequest<{ application: ApplicationRecord; history: Record<string, unknown>[] }>(`/applications/${applicationId}`),
 };
 
 export interface GrievanceRecord {
@@ -397,7 +459,7 @@ export const grievancesApi = {
       body: JSON.stringify(payload),
     }),
   get: (grievanceId: string) =>
-    apiRequest<{ grievance: GrievanceRecord; history: any[] }>(`/grievances/${grievanceId}`),
+    apiRequest<{ grievance: GrievanceRecord; history: Record<string, unknown>[] }>(`/grievances/${grievanceId}`),
 };
 
 export const officerApi = {
@@ -411,8 +473,8 @@ export const officerApi = {
       pendingVerifications: number;
       isDemo: boolean;
     }>("/officer/dashboard"),
-  farmers: () => apiRequest<any[]>("/officer/farmers"),
-  farmerDetail: (farmerId: string) => apiRequest<any>(`/officer/farmers/${farmerId}`),
+  farmers: () => apiRequest<Record<string, unknown>[]>("/officer/farmers"),
+  farmerDetail: (farmerId: string) => apiRequest<Record<string, unknown>>(`/officer/farmers/${farmerId}`),
   applications: () => apiRequest<ApplicationRecord[]>("/officer/applications"),
   reviewApplication: (applicationId: string, payload: { status: string; remarks?: string }) =>
     apiRequest<{ id: string; status: string }>(`/officer/applications/${applicationId}/review`, {
@@ -425,10 +487,22 @@ export const officerApi = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  discrepancies: () => apiRequest<any[]>("/officer/discrepancies"),
+  discrepancies: () => apiRequest<Record<string, unknown>[]>("/officer/discrepancies"),
   resolveDiscrepancy: (alertId: string, payload: { status: string; remarks?: string }) =>
     apiRequest<{ id: string; status: string }>(`/officer/discrepancies/${alertId}/resolve`, {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+};
+
+export const voiceApi = {
+  status: () => apiRequest<VoiceServiceStatus>("/voice/status"),
+  calls: () => apiRequest<VoiceCall[]>("/voice/calls"),
+  myEscalations: () => apiRequest<VoiceEscalation[]>("/voice/my-escalations"),
+  officerEscalations: () => apiRequest<VoiceEscalation[]>("/voice/officer/escalations"),
+  updateEscalation: (id: string, status: "pending" | "assigned" | "contacted" | "closed") =>
+    apiRequest<{ id: string; status: string }>(`/voice/officer/escalations/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
     }),
 };

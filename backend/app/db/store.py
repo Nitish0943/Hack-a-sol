@@ -117,6 +117,58 @@ def initialize_database() -> None:
               new_values TEXT, ip_address TEXT,
               created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+            CREATE TABLE IF NOT EXISTS voice_call_sessions (
+              call_sid TEXT PRIMARY KEY,
+              candidate_user_id TEXT,
+              verified_user_id TEXT,
+              language TEXT NOT NULL DEFAULT 'hi',
+              state TEXT NOT NULL DEFAULT 'language',
+              current_intent TEXT,
+              pending_summary TEXT,
+              invalid_attempts INTEGER NOT NULL DEFAULT 0,
+              policy_query_count INTEGER NOT NULL DEFAULT 0,
+              call_status TEXT NOT NULL DEFAULT 'in-progress',
+              duration_seconds INTEGER,
+              outcome TEXT,
+              started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              ended_at TEXT,
+              updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_voice_calls_verified_user
+              ON voice_call_sessions(verified_user_id, started_at);
+            CREATE TABLE IF NOT EXISTS voice_otp_challenges (
+              call_sid TEXT PRIMARY KEY,
+              user_id TEXT NOT NULL,
+              code_hash TEXT NOT NULL,
+              attempts INTEGER NOT NULL DEFAULT 0,
+              expires_at TEXT NOT NULL,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              verified_at TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_voice_otp_user_created
+              ON voice_otp_challenges(user_id, created_at);
+            CREATE TABLE IF NOT EXISTS voice_escalations (
+              id TEXT PRIMARY KEY,
+              call_sid TEXT NOT NULL UNIQUE,
+              farmer_id TEXT NOT NULL,
+              reason TEXT NOT NULL,
+              summary TEXT NOT NULL,
+              preferred_language TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'pending',
+              assigned_officer TEXT,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_voice_escalations_status_created
+              ON voice_escalations(status, created_at);
+            CREATE TABLE IF NOT EXISTS voice_unanswered_questions (
+              id TEXT PRIMARY KEY,
+              call_sid TEXT NOT NULL,
+              query_digest TEXT NOT NULL,
+              language TEXT NOT NULL,
+              reason TEXT NOT NULL,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         farmer_columns = {
@@ -124,6 +176,22 @@ def initialize_database() -> None:
         }
         if "farmer_category" not in farmer_columns:
             connection.execute("ALTER TABLE farmers ADD COLUMN farmer_category TEXT")
+        voice_call_columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(voice_call_sessions)").fetchall()
+        }
+        if "invalid_attempts" not in voice_call_columns:
+            connection.execute(
+                "ALTER TABLE voice_call_sessions ADD COLUMN invalid_attempts INTEGER NOT NULL DEFAULT 0"
+            )
+        if "policy_query_count" not in voice_call_columns:
+            connection.execute(
+                "ALTER TABLE voice_call_sessions ADD COLUMN policy_query_count INTEGER NOT NULL DEFAULT 0"
+            )
+        if "duration_seconds" not in voice_call_columns:
+            connection.execute(
+                "ALTER TABLE voice_call_sessions ADD COLUMN duration_seconds INTEGER"
+            )
 
 
 def one(sql: str, params: tuple[Any, ...] = ()) -> dict[str, Any] | None:
@@ -140,6 +208,29 @@ def many(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
 def execute(sql: str, params: tuple[Any, ...] = ()) -> None:
     with _lock, get_connection() as connection:
         connection.execute(sql, params)
+
+
+def cleanup_voice_records(retention_days: int) -> None:
+    retention = f"-{max(1, min(retention_days, 365))} days"
+    with _lock, get_connection() as connection:
+        connection.execute(
+            "DELETE FROM voice_otp_challenges WHERE created_at < datetime('now','-1 day')"
+        )
+        connection.execute(
+            "DELETE FROM voice_unanswered_questions WHERE created_at < datetime('now',?)",
+            (retention,),
+        )
+        connection.execute(
+            "DELETE FROM voice_call_sessions WHERE ended_at IS NOT NULL AND ended_at < datetime('now',?)",
+            (retention,),
+        )
+        connection.execute(
+            """
+            UPDATE voice_call_sessions SET pending_summary=NULL
+            WHERE pending_summary IS NOT NULL
+              AND updated_at < datetime('now','-5 minutes')
+            """
+        )
 
 
 def seed_demo_data() -> None:

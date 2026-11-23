@@ -30,7 +30,7 @@ The backend must:
 | Data fetching | TanStack Query |
 | ORM / Database access | Supabase JS or SQL functions |
 | AI explanations | Gemini API |
-| Telephony | Exotel or compatible IVR provider |
+| Telephony | Twilio (current voice implementation) or compatible IVR provider |
 | Deployment | Vercel + Supabase |
 
 Use the existing project stack wherever possible. Do not introduce unnecessary backend frameworks or duplicate services.
@@ -609,11 +609,14 @@ All routes below must be implemented or explicitly documented as deferred. Prote
 
 | Method | Endpoint | Access |
 |---|---|---|
+| POST | `/auth/demo-login` | Development only; seeded role account |
 | POST | `/auth/send-otp` | Public |
 | POST | `/auth/verify-otp` | Public |
 | POST | `/auth/logout` | Authenticated |
 | GET | `/auth/me` | Authenticated |
 | PATCH | `/auth/profile` | Authenticated |
+
+`/auth/demo-login` accepts `{"role":"farmer"}`, `{"role":"officer"}` or `{"role":"admin"}` and is available only when `DEMO_LOGIN_ENABLED=true` outside production. It is intended for demonstration environments and must not be used as production authentication.
 
 ## 8.2 Farmer APIs
 
@@ -990,6 +993,13 @@ Use an internal notification record even if **SMS** delivery is deferred.
 ## 8.12 IVR APIs
 
 The **IVR** service must access the same farmer and scheme data as the web application.
+
+The current local implementation uses Twilio webhooks mounted at
+`/api/v1/voice/*`, rather than the conceptual `/ivr/*` routes below. Its
+configuration, webhook contract, authentication boundaries, limitations and
+verification status are documented in
+[`docs/VOICE_AGENT_INTEGRATION.md`](./docs/VOICE_AGENT_INTEGRATION.md). The
+conceptual routes below are not mounted as live endpoints.
 
 | Method | Endpoint | Purpose |
 |---|---|---|

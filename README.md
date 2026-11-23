@@ -13,7 +13,7 @@ A small monorepo-style starter with a Next.js App Router frontend and a FastAPI 
 cd backend
 Copy-Item .env.example .env
 uv sync
-uv run uvicorn app.main:app --reload --port 8001
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 The API is available at `http://localhost:8000`. Interactive OpenAPI documentation is at `http://localhost:8000/docs`; ReDoc is at `http://localhost:8000/redoc`.
@@ -61,13 +61,15 @@ uv sync
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-API documentation is available at `http://localhost:8001/docs`.
+API documentation is available at `http://localhost:8000/docs`.
 
 Demo login OTP:
 
 - Mobile: `9876543210`
 - OTP: `123456`
 - Roles: `farmer`, `officer`, `admin`
+
+Alternatively, open `/login` and click **Continue as Farmer**, **Continue as Government Officer**, or **Continue as Administrator** for one-click demo access. This feature requires `DEMO_LOGIN_ENABLED=true` and is disabled in production.
 
 Backend verification:
 
