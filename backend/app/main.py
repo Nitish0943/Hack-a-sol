@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -19,16 +20,27 @@ app = FastAPI(
     version=settings.app_version,
     description="KrishiSetu agricultural policy, benefit and grievance API.",
 )
+cors_origins = list(dict.fromkeys([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    *settings.cors_origins,
+]))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=cors_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 app.include_router(api_router)
 
 
+@app.get("/ivr", include_in_schema=False)
 @app.post("/ivr", include_in_schema=False)
 async def legacy_ivr_incoming_call(request: Request) -> Response:
     return await incoming_call(request)
@@ -38,7 +50,23 @@ async def legacy_ivr_incoming_call(request: Request) -> Response:
 async def startup() -> None:
     initialize_database()
     seed_demo_data()
-    cleanup_voice_records(settings.voice_log_retention_days)
+
+
+@app.exception_handler(HTTPException)
+async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": str(exc.detail), "detail": exc.detail, "data": None},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    first_msg = exc.errors()[0]["msg"] if exc.errors() else "Validation failed"
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": first_msg, "detail": exc.errors(), "data": None},
+    )
 
 
 @app.exception_handler(Exception)
@@ -46,7 +74,7 @@ async def handle_unexpected_error(request: Request, exc: Exception) -> JSONRespo
     logger.exception("Unhandled error for %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"detail": "An unexpected server error occurred."},
+        content={"success": False, "message": "An unexpected server error occurred.", "detail": "An unexpected server error occurred."},
     )
 
 
