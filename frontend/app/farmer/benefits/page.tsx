@@ -190,7 +190,7 @@ export default function BenefitsPage() {
             <h3 className="font-bold text-slate-900 dark:text-white">
               Farmer Benefit Records ({filteredRecords.length})
             </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs font-semibold text-slate-600">
               Filter records by stage in the disbursement lifecycle
             </p>
           </div>
@@ -241,28 +241,28 @@ export default function BenefitsPage() {
                 </div>
 
                 <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <div className="glass rounded-xl p-2.5">
-                    <dt className="text-[11px] text-slate-400">Estimated</dt>
-                    <dd className="mt-0.5 font-bold text-slate-800 dark:text-slate-100">
+                  <div className="glass rounded-xl p-2.5 border border-slate-200/80">
+                    <dt className="text-[11px] font-semibold text-slate-600">Estimated</dt>
+                    <dd className="mt-0.5 font-bold text-slate-900 dark:text-slate-100">
                       ₹{record.estimatedAmount.toLocaleString("en-IN")}
                     </dd>
                   </div>
-                  <div className="glass rounded-xl p-2.5">
-                    <dt className="text-[11px] text-slate-400">Recorded</dt>
-                    <dd className="mt-0.5 font-bold text-emerald-700 dark:text-emerald-400">
+                  <div className="glass rounded-xl p-2.5 border border-slate-200/80">
+                    <dt className="text-[11px] font-semibold text-slate-600">Recorded</dt>
+                    <dd className="mt-0.5 font-bold text-emerald-800 dark:text-emerald-400">
                       ₹{(record.receivedAmount || record.sanctionedAmount || record.approvedAmount || record.appliedAmount).toLocaleString("en-IN")}
                     </dd>
                   </div>
                 </dl>
 
-                <p className="mt-3 text-[11px] leading-4 text-slate-500">
+                <p className="mt-3 text-[11px] leading-4 font-medium text-slate-600">
                   {record.notes}
                 </p>
               </div>
 
-              <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-3 dark:border-white/10 text-[11px] text-slate-400">
+              <div className="mt-4 flex items-center justify-between border-t border-slate-200/80 pt-3 dark:border-white/10 text-[11px] font-semibold text-slate-600">
                 <span>Updated {record.updatedAt}</span>
-                <span className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
+                <span className="flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-400">
                   Inspect Record <ArrowRight className="size-3" />
                 </span>
               </div>

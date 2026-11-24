@@ -173,31 +173,52 @@ export async function apiRequest<T>(
 }
 
 export const authApi = {
+  getDemoStatus: () =>
+    apiRequest<{ demoLoginEnabled: boolean }>("/auth/demo-status"),
   sendOtp: (mobileNumber: string) =>
     apiRequest<{ expiresInSeconds: number; demoOtp: string }>("/auth/send-otp", {
       method: "POST",
       body: JSON.stringify({ mobileNumber }),
     }),
-  verifyOtp: (mobileNumber: string, otp: string, role: string) =>
+  verifyOtp: (mobileNumber: string, otp: string, role?: string) =>
     apiRequest<{ accessToken: string; user: { id: string; role: string; full_name?: string } }>("/auth/verify-otp", {
       method: "POST",
       body: JSON.stringify({ mobileNumber, otp, role }),
     }),
-  demoLogin: (role: "farmer" | "officer" | "admin") =>
+  loginWithPassword: (identifier: string, password: string) =>
     apiRequest<{
       accessToken: string;
       user: { id: string; role: string; full_name?: string };
+      farmer?: Record<string, unknown>;
+      government?: Record<string, unknown>;
+    }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ identifier, password }),
+    }),
+  demoLogin: (accountOrRole: string) =>
+    apiRequest<{
+      accessToken: string;
+      user: { id: string; role: string; full_name?: string };
+      farmer?: Record<string, unknown>;
+      government?: Record<string, unknown>;
       isDemo: boolean;
     }>("/auth/demo-login", {
       method: "POST",
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({
+        account: ["farmer1", "farmer2", "farmer3", "officer", "admin"].includes(accountOrRole)
+          ? accountOrRole
+          : undefined,
+        role: ["farmer", "officer", "admin"].includes(accountOrRole)
+          ? accountOrRole
+          : undefined,
+      }),
     }),
   logout: () =>
     apiRequest<{ loggedOut: boolean }>("/auth/logout", {
       method: "POST",
     }),
   me: () =>
-    apiRequest<{ user: Record<string, unknown>; farmer?: Record<string, unknown> }>("/auth/me"),
+    apiRequest<{ user: Record<string, unknown>; farmer?: Record<string, unknown>; government?: Record<string, unknown> }>("/auth/me"),
   register: (payload: {
     mobileNumber: string;
     otp: string;
@@ -211,6 +232,7 @@ export const authApi = {
     farmerCategory: string;
     cultivatorStatus: string;
     landholdingArea: number;
+    password?: string;
   }) =>
     apiRequest<{
       accessToken: string;
@@ -254,12 +276,33 @@ export interface FarmerDashboardData {
   discrepancies?: Array<Record<string, unknown>>;
   notifications?: Array<Record<string, unknown>>;
   recommendedSchemes?: Array<Record<string, unknown>>;
+  nextBestActions?: Array<{
+    title: string;
+    action: string;
+    link: string;
+    priority: string;
+  }>;
+  recommendations?: {
+    government_schemes: Array<Record<string, unknown>>;
+    private_products: Array<Record<string, unknown>>;
+    loan_recommendations: Array<Record<string, unknown>>;
+    next_best_actions: Array<Record<string, unknown>>;
+    summary: Record<string, unknown>;
+  };
   isDemo?: boolean;
 }
 
 export const farmersApi = {
   dashboard: () => apiRequest<FarmerDashboardData>("/farmers/me/dashboard"),
   me: () => apiRequest<{ user: Record<string, unknown>; farmer: Record<string, unknown> }>("/farmers/me"),
+  recommendations: () =>
+    apiRequest<{
+      government_schemes: Array<Record<string, unknown>>;
+      private_products: Array<Record<string, unknown>>;
+      loan_recommendations: Array<Record<string, unknown>>;
+      next_best_actions: Array<Record<string, unknown>>;
+      summary: Record<string, unknown>;
+    }>("/farmers/me/recommendations"),
   update: (payload: Record<string, unknown>) =>
     apiRequest<{ user: Record<string, unknown>; farmer: Record<string, unknown> }>("/farmers/me", {
       method: "PATCH",
@@ -276,12 +319,34 @@ export interface SchemeItem {
   description: string;
   benefit_type?: string;
   benefit_details?: string;
+  benefit_description?: string;
+  eligibility_summary?: string;
   policy_version?: string;
   official_url?: string;
+  image_url?: string;
+  source_license?: string;
   requiredDocuments?: string[];
   status?: string;
   last_updated?: string;
 }
+
+export interface PrivateSchemeItem {
+  id: string;
+  name: string;
+  lender: string;
+  category: string;
+  benefit_text: string;
+  image_url: string;
+  logo_url?: string;
+  source_url: string;
+  last_verified: string;
+  is_active?: number;
+  source_license?: string;
+}
+
+export const privateSchemesApi = {
+  list: () => apiRequest<PrivateSchemeItem[]>("/private-schemes"),
+};
 
 export const schemesApi = {
   list: (params?: { search?: string; category?: string; page?: number; limit?: number }) => {
@@ -505,4 +570,124 @@ export const voiceApi = {
       method: "POST",
       body: JSON.stringify({ status }),
     }),
+};
+
+export const adminApi = {
+  dashboard: () =>
+    apiRequest<{
+      totalUsers: number;
+      totalFarmers: number;
+      activeSchemes: number;
+      openDiscrepancies: number;
+      policyVersions: number;
+      isDemo: boolean;
+    }>("/admin/dashboard"),
+  users: () =>
+    apiRequest<
+      Array<{
+        id: string;
+        mobile_number: string;
+        full_name: string;
+        email?: string;
+        role: string;
+        is_active: number;
+        created_at: string;
+      }>
+    >("/admin/users"),
+  provisionUser: (payload: {
+    fullName: string;
+    email: string;
+    mobileNumber: string;
+    role: string;
+    password: string;
+    department?: string;
+    designation?: string;
+    state?: string;
+    district?: string;
+    block?: string;
+    employeeReference?: string;
+  }) =>
+    apiRequest<{
+      id: string;
+      mobile_number: string;
+      full_name: string;
+      email?: string;
+      role: string;
+      is_active: number;
+    }>("/admin/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateRole: (userId: string, role: string) =>
+    apiRequest<{ id: string; role: string }>(`/admin/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
+  toggleStatus: (userId: string, isActive: boolean) =>
+    apiRequest<{ id: string; is_active: number }>(`/admin/users/${userId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ isActive }),
+    }),
+  schemes: () => apiRequest<SchemeItem[]>("/admin/schemes"),
+  createScheme: (payload: {
+    name: string;
+    department: string;
+    category: string;
+    state?: string;
+    description: string;
+    policyVersion: string;
+  }) =>
+    apiRequest<{ id: string }>("/admin/schemes", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  auditLogs: () => apiRequest<Array<Record<string, unknown>>>("/admin/audit-logs"),
+};
+
+export interface AssistantResponse {
+  text: string;
+  spokenText: string;
+  intent: "navigation" | "personalized_info" | "action" | "explanation" | "clarification";
+  action: string;
+  navigation?: {
+    targetRoute: string;
+    description: string;
+  };
+  data?: Record<string, unknown>;
+  cards?: Array<Record<string, unknown>>;
+  applicationChannel?: {
+    id?: string;
+    name: string;
+    provider?: string;
+    category?: string;
+    interest_rate?: string;
+    limit_summary?: string;
+    official_url?: string;
+    application_channel: string;
+    online_portal?: string;
+    required_documents?: string[];
+    application_steps?: string[];
+  };
+  followUpSuggestions?: string[];
+  sessionId: string;
+  language: string;
+}
+
+export const assistantApi = {
+  sendCommand: (payload: {
+    message: string;
+    sessionId?: string;
+    currentRoute?: string;
+    language?: string;
+  }) =>
+    apiRequest<AssistantResponse>("/assistant/command", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getRegistry: () =>
+    apiRequest<{
+      registry: Record<string, Record<string, unknown>>;
+      totalCommands: number;
+      supportedLanguages: string[];
+    }>("/assistant/registry"),
 };

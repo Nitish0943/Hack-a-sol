@@ -43,6 +43,13 @@ async def featured_schemes() -> dict:
     return success(rows, "Featured demo schemes retrieved")
 
 
+@router.get("/private/all")
+@router.get("/private-schemes")
+async def list_private_schemes_route() -> dict:
+    rows = many("SELECT * FROM private_schemes WHERE is_active=1 ORDER BY last_verified DESC")
+    return success(rows, "Private schemes retrieved")
+
+
 @router.get("/{scheme_id}")
 async def scheme_detail(scheme_id: str) -> dict:
     scheme = one("SELECT * FROM schemes WHERE id=?", (scheme_id,))

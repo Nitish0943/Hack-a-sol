@@ -9,7 +9,17 @@ export function Reveal({ children, delay = 0, className, as: Tag = "div" }: { ch
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { threshold: 0.15 });
+    const rect = el.getBoundingClientRect();
+    if (rect.top < (window.innerHeight || document.documentElement.clientHeight) + 60) {
+      setShown(true);
+      return;
+    }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        setShown(true);
+        io.disconnect();
+      }
+    }, { threshold: 0.05 });
     io.observe(el);
     return () => io.disconnect();
   }, []);

@@ -3,8 +3,6 @@ import { ArrowRight, Calculator, CheckCircle2, Landmark, Phone, Search, ShieldCh
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CountUp, GlassCard, Reveal } from "@/components/motion";
 import { MediaBanner } from "@/components/media-banner";
-import { ArrowRight, Calculator, CheckCircle2, Landmark, Phone, Search, ShieldCheck, Sprout, WalletCards } from "lucide-react";
-import { LanguageSwitcher } from "@/components/language-switcher";
 
 const features = [
   { icon: Search, title: "Smart Scheme Discovery", hi: "सही योजना खोजें", text: "Central and Chhattisgarh schemes in one place.", span: "md:col-span-2" },
@@ -26,53 +24,43 @@ export default function Home() {
   return (
     <main className="relative min-h-screen overflow-x-clip">
       <nav className="sticky top-3 z-40 mx-auto mt-3 flex max-w-6xl items-center justify-between gap-2 px-3 sm:px-4">
-        <div className="glass flex w-full items-center justify-between rounded-full py-2 pl-3 pr-2 sm:pl-4">
+        <div className="glass flex w-full items-center justify-between rounded-full py-2 pl-3 pr-2 sm:pl-4 border border-slate-200/90 shadow-md">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid size-10 place-items-center rounded-full bg-[#166534] text-white shadow-lg shadow-green-900/20"><Sprout className="size-5" /></span>
-            <span className="leading-4"><span className="block font-bold">KrishiSetu</span><span className="text-[11px] text-slate-500">कृषि सेतु</span></span>
+            <span className="leading-4"><span className="block font-bold text-slate-900">KrishiSetu</span><span className="text-[11px] text-slate-600 font-semibold">कृषि सेतु</span></span>
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
             <LanguageSwitcher />
-            <Link href="/login" className="rounded-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white/60 sm:text-sm">Log in</Link>
-            <Link href="/register" className="glass-btn glass-green rounded-full px-4 py-2.5 text-xs font-semibold sm:text-sm">Register</Link>
+            <Link href="/login" className="rounded-full px-3 py-2 text-xs font-bold text-slate-800 hover:bg-white/80 sm:text-sm transition">Log in</Link>
+            <Link href="/register" className="glass-btn glass-green rounded-full px-4 py-2.5 text-xs font-bold text-white sm:text-sm shadow-sm">Register</Link>
           </div>
-    <main className="min-h-screen overflow-hidden bg-[#F8FAF5]">
-      <nav className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-3 sm:h-20 sm:flex-nowrap sm:px-8 sm:py-0">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-xl bg-[#166534] text-white"><Sprout className="size-6" /></span>
-          <div><span className="block text-lg font-bold leading-5">KrishiSetu</span><span className="text-xs text-slate-500">कृषि सेतु</span></div>
-        </Link>
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher />
-          <Link href="/login" className="whitespace-nowrap rounded-lg px-1.5 py-2 text-xs font-semibold text-slate-700 sm:px-3 sm:text-sm">Log in</Link>
-          <Link href="/register" className="whitespace-nowrap rounded-lg bg-[#166534] px-2 py-2.5 text-xs font-semibold text-white hover:bg-[#14532d] sm:px-4 sm:text-sm">Register</Link>
         </div>
       </nav>
 
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 sm:px-8 md:grid-cols-[1.05fr_.95fr] md:pt-24">
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 sm:px-8 md:grid-cols-[1.05fr_.95fr] md:pt-20">
         <div>
-          <Reveal><span className="glass inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold text-[#166534]"><ShieldCheck className="size-4" /> Transparent agricultural services</span></Reveal>
-          <Reveal delay={100}><h1 className="mt-6 text-5xl font-bold leading-[1.04] tracking-tight text-[#14301e] sm:text-7xl">Know Your Benefits.<br /><span className="bg-gradient-to-r from-[#166534] via-[#22a559] to-[#CA9A04] bg-clip-text text-transparent">Track Every Rupee.</span></h1></Reveal>
-          <Reveal delay={200}><p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">Discover government schemes, understand your agricultural benefits, track applications and access assistance through your phone.</p></Reveal>
+          <Reveal><span className="glass inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold text-[#166534] border border-emerald-300/80 shadow-xs"><ShieldCheck className="size-4" /> Transparent agricultural services</span></Reveal>
+          <Reveal delay={100}><h1 className="mt-6 text-5xl font-bold leading-[1.04] tracking-tight text-[#0f2415] sm:text-7xl">Know Your Benefits.<br /><span className="bg-gradient-to-r from-[#166534] via-[#22a559] to-[#CA9A04] bg-clip-text text-transparent">Track Every Rupee.</span></h1></Reveal>
+          <Reveal delay={200}><p className="mt-6 max-w-xl text-base leading-7 text-slate-700 font-medium sm:text-lg">Discover government schemes, understand your agricultural benefits, track applications and access assistance through your phone.</p></Reveal>
           <Reveal delay={300} className="mt-9 flex flex-wrap gap-3">
-            <Link href="/register" className="glass-btn glass-green pulse-ring inline-flex items-center gap-2 rounded-full px-7 py-4 text-sm font-semibold">Get Started <ArrowRight className="size-4" /></Link>
-            <a href="#features" className="glass-btn glass inline-flex items-center rounded-full px-7 py-4 text-sm font-semibold text-slate-800">Explore Features</a>
+            <Link href="/register" className="glass-btn glass-green pulse-ring inline-flex items-center gap-2 rounded-full px-7 py-4 text-sm font-bold text-white shadow-md">Get Started <ArrowRight className="size-4" /></Link>
+            <a href="#features" className="glass-btn glass inline-flex items-center rounded-full px-7 py-4 text-sm font-bold text-slate-900 border border-slate-200/90 shadow-sm">Explore Features</a>
           </Reveal>
-          <Reveal delay={400} className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+          <Reveal delay={400} className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700 font-semibold">
             {["English · हिंदी · छत्तीसगढ़ी", "Chhattisgarh focused", "Works on basic phones"].map((x) => <span key={x} className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#166534]" />{x}</span>)}
           </Reveal>
         </div>
 
         <Reveal delay={200}>
-          <GlassCard tilt className="float-slow glass-strong p-5">
-            <div className="flex items-center justify-between border-b border-white/70 pb-4"><div><p className="text-xs text-slate-500">Demo farmer dashboard</p><p className="mt-1 font-bold">Ramesh Kumar</p></div><span className="rounded-full bg-green-100/80 px-3 py-1 text-xs font-bold text-[#166534]">85% complete</span></div>
+          <GlassCard tilt className="float-slow glass-strong p-5 border border-white/90 shadow-lg">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-4"><div><p className="text-xs text-slate-600 font-medium">Demo farmer dashboard</p><p className="mt-1 font-bold text-slate-900 text-base">Ramesh Kumar</p></div><span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-[#166534] border border-emerald-300">85% complete</span></div>
             <div className="grid grid-cols-2 gap-3 py-5">
-              <div className="glass-green rounded-2xl p-4"><p className="text-xs opacity-80">Potential Benefits</p><p className="mt-2 text-2xl font-bold"><CountUp to={42500} prefix="₹" /></p></div>
-              <div className="glass rounded-2xl p-4"><p className="text-xs text-slate-500">Confirmed Received</p><p className="mt-2 text-2xl font-bold"><CountUp to={18000} prefix="₹" /></p></div>
+              <div className="glass-green rounded-2xl p-4 shadow-sm"><p className="text-xs text-emerald-100 font-medium">Potential Benefits</p><p className="mt-2 text-2xl font-extrabold text-white"><CountUp to={42500} prefix="₹" /></p></div>
+              <div className="glass rounded-2xl p-4 border border-slate-200/80 shadow-xs"><p className="text-xs text-slate-600 font-semibold">Confirmed Received</p><p className="mt-2 text-2xl font-extrabold text-slate-900"><CountUp to={18000} prefix="₹" /></p></div>
             </div>
             <div className="space-y-2">
               {[["PM-KISAN Income Support", "₹6,000", "Received"], ["PM Fasal Bima Yojana", "₹12,000", "Under review"], ["Kisan Credit Card", "₹24,500", "Potential"]].map(([n, a, s]) => (
-                <div key={n} className="flex items-center justify-between rounded-xl bg-white/60 px-3 py-3"><div><p className="text-sm font-semibold">{n}</p><p className="text-xs text-slate-500">{s}</p></div><p className="text-sm font-bold">{a}</p></div>
+                <div key={n} className="flex items-center justify-between rounded-xl bg-white/80 border border-slate-200/60 px-3 py-3"><div><p className="text-sm font-bold text-slate-900">{n}</p><p className="text-xs text-slate-600 font-medium">{s}</p></div><p className="text-sm font-extrabold text-[#166534]">{a}</p></div>
               ))}
             </div>
           </GlassCard>

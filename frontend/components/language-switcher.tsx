@@ -80,18 +80,18 @@ export function LanguageSwitcher({
         onKeyDown={(event) => {
           if (event.key === "Escape") setOpen(false);
         }}
-        className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:px-3"
+        className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200/90 dark:border-white/20 bg-white dark:bg-slate-900/90 px-2.5 text-sm font-semibold text-slate-800 dark:text-slate-100 transition hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 sm:px-3 shadow-xs"
       >
-        <Globe2 aria-hidden="true" className="size-4 shrink-0 text-[#166534]" />
+        <Globe2 aria-hidden="true" className="size-4 shrink-0 text-[#166534] dark:text-emerald-400" />
         <span className="sm:hidden">{compactNames[language]}</span>
         <span className="hidden sm:inline">{languageNames[language]}</span>
-        <ChevronDown aria-hidden="true" className="hidden size-3.5 text-slate-400 sm:block" />
+        <ChevronDown aria-hidden="true" className="hidden size-3.5 text-slate-400 dark:text-slate-300 sm:block" />
       </button>
       {open && (
         <div
           role="menu"
           aria-label={accessibilityLabels[language].choose}
-          className={`absolute z-50 mt-2 w-48 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ${
+          className={`absolute z-50 mt-2 w-48 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200/90 dark:border-white/20 bg-white dark:bg-slate-900 p-1.5 shadow-xl ${
             alignRight ? "right-0" : "left-0"
           }`}
         >
@@ -109,8 +109,8 @@ export function LanguageSwitcher({
                 }}
                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
                   selected
-                    ? "bg-[#EAF4EC] font-semibold text-[#166534]"
-                    : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-[#EAF4EC] dark:bg-emerald-950/80 font-bold text-[#166534] dark:text-emerald-300"
+                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <span>{languageNames[option]}</span>

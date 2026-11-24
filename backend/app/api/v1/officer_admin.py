@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.v1.auth import require_role, success
+from app.core.security import hash_password
 from app.db.store import execute, many, one
 
 router = APIRouter(tags=["officer and administration"])
@@ -15,13 +16,26 @@ class StatusUpdate(BaseModel):
     remarks: str | None = None
 
 
-class SchemeCreate(BaseModel):
-    name: str
-    department: str
-    category: str
-    state: str = "Central"
-    description: str
-    policyVersion: str
+class UserProvision(BaseModel):
+    fullName: str
+    email: str
+    mobileNumber: str
+    role: str  # "officer" | "admin" | "farmer"
+    password: str
+    department: str | None = None
+    designation: str | None = None
+    state: str = "Chhattisgarh"
+    district: str = "Raipur"
+    block: str | None = None
+    employeeReference: str | None = None
+
+
+class RoleUpdate(BaseModel):
+    role: str
+
+
+class StatusToggle(BaseModel):
+    isActive: bool
 
 
 def audit(
@@ -63,10 +77,40 @@ async def officer_dashboard(user: dict = Depends(require_role("officer", "admin"
     }, "Officer dashboard retrieved")
 
 
+class SchemeCreate(BaseModel):
+    name: str
+    department: str
+    category: str
+    state: str = "Central"
+    description: str
+    policyVersion: str
+
+
 @router.get("/officer/farmers")
 async def officer_farmers(user: dict = Depends(require_role("officer", "admin"))) -> dict:
+    if user["role"] == "officer":
+        gov = one("SELECT district FROM government_profiles WHERE user_id=?", (user["id"],))
+        if gov and gov.get("district"):
+            rows = many(
+                """SELECT u.id, u.full_name, u.email, u.mobile_number, u.role,
+                          f.farmer_id, f.district, f.village, f.cultivator_status,
+                          f.cultivated_area, f.crops, f.profile_completion, f.is_demo
+                   FROM users u
+                   JOIN farmers f ON f.id=u.id
+                   WHERE u.role='farmer' AND LOWER(f.district)=LOWER(?)
+                   ORDER BY u.full_name""",
+                (gov["district"],),
+            )
+            return success(rows, f"Farmer records for assigned district: {gov['district']}")
+            
     rows = many(
-        "SELECT u.id,u.full_name,u.role,f.farmer_id,f.district,f.village,f.cultivator_status,f.profile_completion,f.is_demo FROM users u LEFT JOIN farmers f ON f.id=u.id WHERE u.role='farmer' ORDER BY u.full_name"
+        """SELECT u.id, u.full_name, u.email, u.mobile_number, u.role,
+                  f.farmer_id, f.district, f.village, f.cultivator_status,
+                  f.cultivated_area, f.crops, f.profile_completion, f.is_demo
+           FROM users u
+           LEFT JOIN farmers f ON f.id=u.id
+           WHERE u.role='farmer'
+           ORDER BY u.full_name"""
     )
     return success(rows, "Farmer records retrieved")
 
@@ -172,7 +216,99 @@ async def admin_dashboard(user: dict = Depends(require_role("admin"))) -> dict:
 
 @router.get("/admin/users")
 async def admin_users(user: dict = Depends(require_role("admin"))) -> dict:
-    return success(many("SELECT id,mobile_number,full_name,role,is_active,created_at FROM users ORDER BY created_at"), "Users retrieved")
+    return success(many("SELECT id,mobile_number,full_name,email,role,is_active,created_at FROM users ORDER BY created_at"), "Users retrieved")
+
+
+@router.post("/admin/users")
+async def provision_user(payload: UserProvision, user: dict = Depends(require_role("admin"))) -> dict:
+    allowed_roles = {"farmer", "officer", "admin"}
+    if payload.role not in allowed_roles:
+        raise HTTPException(status_code=422, detail="Invalid role specified. Must be farmer, officer, or admin.")
+
+    existing_mobile = one("SELECT id FROM users WHERE mobile_number=?", (payload.mobileNumber,))
+    if existing_mobile:
+        raise HTTPException(status_code=409, detail="A user with this mobile number already exists")
+
+    if payload.email:
+        existing_email = one("SELECT id FROM users WHERE email=?", (payload.email.lower().strip(),))
+        if existing_email:
+            raise HTTPException(status_code=409, detail="A user with this email address already exists")
+
+    user_id = f"user-{payload.role}-{secrets.token_hex(6)}"
+    pwd_hash = hash_password(payload.password)
+    email = payload.email.lower().strip() if payload.email else None
+
+    execute(
+        """INSERT INTO users(id, mobile_number, full_name, email, password_hash, role, is_active, created_at, updated_at)
+           VALUES(?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""",
+        (user_id, payload.mobileNumber, payload.fullName, email, pwd_hash, payload.role),
+    )
+
+    if payload.role == "farmer":
+        farmer_id = f"KS-{secrets.token_hex(4).upper()}"
+        execute(
+            """INSERT INTO farmers(id, farmer_id, state, district, block, village, pincode, cultivator_status, cultivated_area, crops, profile_completion, is_demo)
+               VALUES(?, ?, ?, ?, ?, 'Village', '492001', 'landowner', 2.0, '["Paddy"]', 60, 0)""",
+            (user_id, farmer_id, payload.state, payload.district, payload.block or "Block 1"),
+        )
+    elif payload.role in {"officer", "admin"}:
+        gov_id = f"gov-{secrets.token_hex(6)}"
+        execute(
+            """INSERT INTO government_profiles(id, user_id, department, designation, state, district, block, employee_reference, created_at)
+               VALUES(?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+            (gov_id, user_id, payload.department or "Agriculture Development", payload.designation or "Extension Officer", payload.state, payload.district, payload.block, payload.employeeReference or f"EMP-{secrets.token_hex(4).upper()}"),
+        )
+
+    audit(
+        user["id"],
+        "provision_user",
+        "user",
+        user_id,
+        None,
+        {"role": payload.role, "email": email, "mobileNumber": payload.mobileNumber, "fullName": payload.fullName},
+    )
+
+    created = one("SELECT id, mobile_number, full_name, email, role, is_active, created_at FROM users WHERE id=?", (user_id,))
+    return success(created, f"{payload.role.capitalize()} user provisioned successfully")
+
+
+@router.patch("/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, payload: RoleUpdate, user: dict = Depends(require_role("admin"))) -> dict:
+    allowed_roles = {"farmer", "officer", "admin"}
+    if payload.role not in allowed_roles:
+        raise HTTPException(status_code=422, detail="Invalid role specified. Must be farmer, officer, or admin.")
+
+    target_user = one("SELECT * FROM users WHERE id=?", (user_id,))
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if target_user["id"] == user["id"] and payload.role != "admin":
+        raise HTTPException(status_code=400, detail="Cannot demote your own admin account")
+
+    old_role = target_user["role"]
+    execute("UPDATE users SET role=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (payload.role, user_id))
+
+    audit(user["id"], "update_role", "user", user_id, {"role": old_role}, {"role": payload.role})
+    updated = one("SELECT id, mobile_number, full_name, email, role, is_active, updated_at FROM users WHERE id=?", (user_id,))
+    return success(updated, f"User role updated to {payload.role}")
+
+
+@router.patch("/admin/users/{user_id}/status")
+async def toggle_user_status(user_id: str, payload: StatusToggle, user: dict = Depends(require_role("admin"))) -> dict:
+    target_user = one("SELECT * FROM users WHERE id=?", (user_id,))
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if target_user["id"] == user["id"] and not payload.isActive:
+        raise HTTPException(status_code=400, detail="Cannot deactivate your own admin account")
+
+    is_active_int = 1 if payload.isActive else 0
+    execute("UPDATE users SET is_active=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (is_active_int, user_id))
+
+    audit(user["id"], "toggle_status", "user", user_id, {"is_active": target_user["is_active"]}, {"is_active": is_active_int})
+    updated = one("SELECT id, mobile_number, full_name, email, role, is_active, updated_at FROM users WHERE id=?", (user_id,))
+    status_label = "activated" if payload.isActive else "deactivated"
+    return success(updated, f"User account {status_label}")
 
 
 @router.get("/admin/schemes")

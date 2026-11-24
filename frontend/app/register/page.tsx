@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowLeft, Sprout, CheckCircle2, AlertCircle, RefreshCw, KeyRound, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useState } from "react";
 import { authApi } from "@/lib/api";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -88,29 +87,6 @@ export default function RegisterPage() {
     } catch (cause) {
       const msg = cause instanceof Error ? cause.message : "Registration failed.";
       setError(msg);
-    const form = new FormData(event.currentTarget);
-    const mobileNumber = String(form.get("mobileNumber") || "");
-    const otp = String(form.get("otp") || "");
-    try {
-      await authApi.sendOtp(mobileNumber);
-      const registered = await authApi.register({
-        mobileNumber,
-        otp,
-        fullName: String(form.get("fullName")),
-        preferredLanguage: String(form.get("preferredLanguage")),
-        state: String(form.get("state")),
-        district: String(form.get("district")),
-        block: String(form.get("block")),
-        village: String(form.get("village")),
-        pincode: String(form.get("pincode") || "") || undefined,
-        farmerCategory: String(form.get("farmerCategory")),
-        cultivatorStatus: String(form.get("cultivatorStatus")),
-        landholdingArea: Number(form.get("landholdingArea")),
-      });
-      setSuccess(`Farmer registered: ${registered.farmer.farmer_id}`);
-      router.push("/farmer/dashboard");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Registration failed.");
     } finally {
       setLoading(false);
     }
@@ -119,7 +95,7 @@ export default function RegisterPage() {
   const isAlreadyRegistered = error.toLowerCase().includes("already registered");
 
   return (
-    <main className="min-h-screen bg-[#F8FAF5] px-4 py-8">
+    <main className="min-h-screen bg-[var(--background)] px-4 py-8 transition-colors">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
@@ -132,22 +108,22 @@ export default function RegisterPage() {
             <LanguageSwitcher />
             <Link
               href="/login"
-              className="glass glass-btn inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
+              className="glass glass-btn inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-white/20 shadow-xs hover:text-emerald-700 dark:hover:text-emerald-300 transition"
             >
               <ArrowLeft className="size-3.5" /> Already registered? Log in
             </Link>
           </div>
         </div>
 
-        <section className="glass rounded-3xl p-5 sm:p-8 shadow-xl">
+        <section className="glass rounded-3xl p-5 sm:p-8 shadow-xl border border-slate-200/90 dark:border-white/16">
           <div className="mb-7">
-            <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#166534]">
+            <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#166534] dark:text-emerald-400">
               Farmer Onboarding
             </span>
             <h1 className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-white">
               Create your farmer profile
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
               Fields marked * are required. This system registers your profile in the decentralized agricultural registry.
             </p>
           </div>
@@ -160,7 +136,7 @@ export default function RegisterPage() {
                   Personal information
                 </legend>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Full name *
                     <input
                       name="fullName"
@@ -173,7 +149,7 @@ export default function RegisterPage() {
 
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                         Mobile number *
                       </label>
                       <button
@@ -200,7 +176,7 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={handleSendOtp}
-                        className="glass glass-btn rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                        className="glass glass-btn rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-200/90 dark:border-white/20 shadow-xs"
                       >
                         Send OTP
                       </button>
@@ -208,7 +184,7 @@ export default function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                       Demo OTP *
                     </label>
                     <div className="relative mt-2">
@@ -223,16 +199,17 @@ export default function RegisterPage() {
                         placeholder="123456"
                       />
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-400">
-                      Demo OTP is <strong>123456</strong> for testing.
+                    <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      Demo OTP is <strong className="font-bold font-mono text-emerald-800 dark:text-emerald-400">123456</strong> for testing.
                     </p>
                   </div>
 
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Preferred language *
                     <select name="preferredLanguage" className="field mt-2">
                       <option>Hindi</option>
                       <option>English</option>
+                      <option>Chhattisgarhi</option>
                     </select>
                   </label>
                 </div>
@@ -246,28 +223,28 @@ export default function RegisterPage() {
               )}
 
               {/* Location Information */}
-              <fieldset className="border-t border-slate-200/60 pt-6 dark:border-white/10">
+              <fieldset className="border-t border-slate-200/90 pt-6 dark:border-white/10">
                 <legend className="mb-4 text-base font-bold text-slate-900 dark:text-white">
                   Location information
                 </legend>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     State *
                     <input name="state" className="field mt-2" required defaultValue="Chhattisgarh" />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     District *
                     <input name="district" className="field mt-2" required defaultValue="Raipur" />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Block *
                     <input name="block" className="field mt-2" required defaultValue="Arang" />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Village *
                     <input name="village" className="field mt-2" required defaultValue="Khamtarai" />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     PIN code
                     <input name="pincode" className="field mt-2" placeholder="492001" defaultValue="492001" />
                   </label>
@@ -275,12 +252,12 @@ export default function RegisterPage() {
               </fieldset>
 
               {/* Farmer Information */}
-              <fieldset className="border-t border-slate-200/60 pt-6 dark:border-white/10">
+              <fieldset className="border-t border-slate-200/90 pt-6 dark:border-white/10">
                 <legend className="mb-4 text-base font-bold text-slate-900 dark:text-white">
                   Farmer & Landholding details
                 </legend>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Farmer category *
                     <select name="farmerCategory" className="field mt-2" required>
                       <option>Small &amp; marginal farmer</option>
@@ -289,7 +266,7 @@ export default function RegisterPage() {
                       <option>Other farmer</option>
                     </select>
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Cultivator status *
                     <select name="cultivatorStatus" className="field mt-2" required>
                       <option>Landowner</option>
@@ -299,11 +276,11 @@ export default function RegisterPage() {
                       <option>Other</option>
                     </select>
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     KrishiSetu / existing Farmer ID
                     <input className="field mt-2" placeholder="Optional (e.g. KS-CG-10482)" />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Landholding area (acres) *
                     <input
                       name="landholdingArea"
@@ -362,76 +339,6 @@ export default function RegisterPage() {
               >
                 {loading ? "Creating farmer profile..." : "Create farmer profile"}
               </button>
-          <Link href="/" className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-[#166534] text-white"><Sprout className="size-5" /></span><span className="font-bold">KrishiSetu</span></Link>
-          <div className="flex items-center gap-3">
-            <LanguageSwitcher />
-            <Link href="/login" className="inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" /> Already registered</Link>
-          </div>
-        </div>
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-          <div className="mb-7">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#166534]">Farmer registration</p>
-            <h1 className="mt-2 text-3xl font-bold">Create your farmer profile</h1>
-            <p className="mt-2 text-sm text-slate-500">Fields marked * are required. This demo does not collect real banking information.</p>
-          </div>
-          <form onSubmit={submitRegistration}>
-            <div className="space-y-8">
-              <fieldset>
-                <legend className="mb-4 font-bold">Personal information</legend>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-semibold">Full name *<input name="fullName" className="field mt-2" required defaultValue="Ramesh Kumar" /></label>
-                  <label className="text-sm font-semibold">Mobile number *<input name="mobileNumber" className="field mt-2" required type="tel" defaultValue="9876501234" /></label>
-                  <label className="text-sm font-semibold">Demo OTP *<input name="otp" className="field mt-2" required inputMode="numeric" defaultValue="123456" /></label>
-                  <label className="text-sm font-semibold">Preferred language *<select name="preferredLanguage" className="field mt-2"><option>Hindi</option><option>English</option></select></label>
-                </div>
-              </fieldset>
-              <fieldset className="border-t border-slate-100 pt-6">
-                <legend className="mb-4 font-bold">Location information</legend>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {[
-                    ["State", "state", "Chhattisgarh"],
-                    ["District", "district", "Raipur"],
-                    ["Block", "block", "Arang"],
-                    ["Village", "village", "Khamtarai"],
-                    ["PIN code", "pincode", ""],
-                  ].map(([label, name, value]) => (
-                    <label key={name} className="text-sm font-semibold">
-                      {label}{name !== "pincode" ? " *" : ""}
-                      <input name={name} className="field mt-2" required={name !== "pincode"} defaultValue={value} placeholder={`Enter ${label.toLowerCase()}`} />
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset className="border-t border-slate-100 pt-6">
-                <legend className="mb-4 font-bold">Farmer information</legend>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-semibold">Farmer category *<select name="farmerCategory" className="field mt-2" required><option>Small &amp; marginal farmer</option><option>Other farmer</option></select></label>
-                  <label className="text-sm font-semibold">Cultivator status *<select name="cultivatorStatus" className="field mt-2" required><option>Landowner</option><option>Tenant farmer</option><option>Sharecropper</option><option>Joint landholder</option><option>Land mutation pending</option><option>Other</option></select></label>
-                  <label className="text-sm font-semibold">KrishiSetu / existing Farmer ID<input className="field mt-2" placeholder="Optional" /></label>
-                  <label className="text-sm font-semibold">Landholding area (acres) *<input name="landholdingArea" className="field mt-2" required type="number" step="0.1" defaultValue="2" /></label>
-                </div>
-              </fieldset>
-            </div>
-            {error && <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-            {success && <p className="mt-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</p>}
-            <div className="mt-8 flex justify-end">
-              <button disabled={loading} type="submit" className="w-full rounded-xl bg-[#166534] px-6 py-3 font-semibold text-white disabled:opacity-60 sm:w-auto">{loading ? "Creating profile..." : "Create farmer profile"}</button>
-              <fieldset><legend className="mb-4 font-bold">Personal information</legend><div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-semibold">Full name *<input className="field mt-2" required defaultValue="Ramesh Kumar" /></label>
-                <label className="text-sm font-semibold">Mobile number *<input className="field mt-2" required type="tel" defaultValue="9876543210" /></label>
-                <label className="text-sm font-semibold">Date of birth<input className="field mt-2" type="date" /></label>
-                <label className="text-sm font-semibold">Gender<select className="field mt-2"><option>Male</option><option>Female</option><option>Other</option></select></label>
-                <label className="text-sm font-semibold sm:col-span-2">Preferred language *<select className="field mt-2"><option>Hindi</option><option>English</option><option>छत्तीसगढ़ी</option></select></label>
-              </div></fieldset>
-              <fieldset className="border-t border-slate-100 pt-6"><legend className="mb-4 font-bold">Location information</legend><div className="grid gap-4 sm:grid-cols-2">
-                {["State","District","Block","Village","PIN code"].map((label) => <label key={label} className="text-sm font-semibold">{label}{label === "State" ? " *" : ""}{label === "Village" ? " *" : ""}<input className="field mt-2" required={label === "State" || label === "District" || label === "Block" || label === "Village"} defaultValue={label === "State" ? "Chhattisgarh" : label === "District" ? "Raipur" : label === "Block" ? "Arang" : label === "Village" ? "Khamtarai" : ""} placeholder={`Enter ${label.toLowerCase()}`} /></label>)}
-              </div></fieldset>
-              <fieldset className="border-t border-slate-100 pt-6"><legend className="mb-4 font-bold">Farmer information</legend><div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-semibold">Farmer category *<select className="field mt-2" required><option>Small & marginal farmer</option><option>Other farmer</option></select></label>
-                <label className="text-sm font-semibold">Cultivator status *<select className="field mt-2" required><option>Landowner</option><option>Tenant farmer</option><option>Sharecropper</option><option>Joint landholder</option><option>Land mutation pending</option><option>Other</option></select></label>
-                <label className="text-sm font-semibold">KrishiSetu / existing Farmer ID<input className="field mt-2" placeholder="Optional" /></label>
-                <label className="text-sm font-semibold">Landholding area (acres) *<input className="field mt-2" required type="number" step="0.1" defaultValue="2" /></label>
-              </div></fieldset>
             </div>
           </form>
         </section>

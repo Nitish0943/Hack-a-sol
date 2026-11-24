@@ -11,7 +11,15 @@ class Settings(BaseSettings):
     app_environment: str = "development"
     frontend_origins: str = "http://localhost:3000"
     demo_otp_enabled: bool = True
-    demo_login_enabled: bool = False
+    demo_login_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "ENABLE_DEMO_LOGIN",
+            "enable_demo_login",
+            "DEMO_LOGIN_ENABLED",
+            "demo_login_enabled",
+        ),
+    )
     demo_otp: str = "123456"
     database_path: str = "./krishisetu.db"
 

@@ -406,34 +406,34 @@ export default function CalculatorPage() {
               {/* Metrics Grid */}
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <div className="glass rounded-xl p-4">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs font-semibold text-slate-600">
                     {mode === "loan" ? "Principal Loan" : "Total Project Cost"}
                   </p>
                   <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
                     ₹{(mode === "loan" ? principal : cost).toLocaleString("en-IN")}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-400">
+                  <p className="mt-1 text-[11px] font-semibold text-slate-600">
                     {mode === "loan" ? `${tenureMonths} months tenure` : equipmentType}
                   </p>
                 </div>
 
                 <div className="glass rounded-xl p-4">
-                  <p className="text-xs text-slate-500">Govt Benefit / Saving</p>
+                  <p className="text-xs font-semibold text-slate-600">Govt Benefit / Saving</p>
                   <p className="mt-1 text-lg font-bold text-emerald-700 dark:text-emerald-400">
                     ₹{(mode === "loan" ? subventionAmount : cappedSubsidy).toLocaleString("en-IN")}
                   </p>
-                  <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <p className="mt-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
                     <TrendingDown className="size-3" />
                     {mode === "loan" ? `${subventionRate}% interest waived` : `${subsidyPercent}% grant portion`}
                   </p>
                 </div>
 
                 <div className="glass rounded-xl p-4">
-                  <p className="text-xs text-slate-500">Farmer Effective Share</p>
+                  <p className="text-xs font-semibold text-slate-600">Farmer Effective Share</p>
                   <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
                     ₹{(mode === "loan" ? effectiveLoanRepayment : farmerShare).toLocaleString("en-IN")}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-400">
+                  <p className="mt-1 text-[11px] font-semibold text-slate-600">
                     {mode === "loan" ? "Total repayment amount" : "Net out-of-pocket"}
                   </p>
                 </div>

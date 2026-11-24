@@ -56,7 +56,7 @@ From `backend/`, run:
 
 ```text
 uv sync
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run --module uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 The frontend runs separately on port `3000`. `GET /api/v1/voice/status`

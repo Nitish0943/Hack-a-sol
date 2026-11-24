@@ -432,7 +432,7 @@ export default function EligibilityPage() {
 
             {/* Rules Breakdown */}
             <div className="mt-6 space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Rule Evaluation Breakdown
               </h4>
               {rules.map((rule) => {
@@ -449,7 +449,7 @@ export default function EligibilityPage() {
                 return (
                   <div
                     key={rule.id}
-                    className="glass flex items-start gap-3 rounded-xl p-4 transition"
+                    className="glass flex items-start gap-3 rounded-xl p-4 transition border border-slate-200/80"
                   >
                     <div className="mt-0.5 shrink-0">{icon}</div>
                     <div className="flex-1">
@@ -459,7 +459,7 @@ export default function EligibilityPage() {
                         </span>
                         <StatusBadge status={badgeStatus} />
                       </div>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
                         {rule.detail}
                       </p>
                     </div>
@@ -469,17 +469,17 @@ export default function EligibilityPage() {
             </div>
 
             {/* Scheme Entitlement Details */}
-            <div className="mt-6 rounded-xl border border-black/5 bg-white/40 p-4 dark:border-white/10 dark:bg-slate-900/40">
+            <div className="mt-6 rounded-xl border border-slate-200/80 bg-white/60 p-4 dark:border-white/10 dark:bg-slate-900/40">
               <div className="flex items-center gap-2">
                 <FileText className="size-4 text-emerald-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   Projected Financial Entitlement
                 </h4>
               </div>
-              <p className="mt-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+              <p className="mt-2 text-sm font-bold text-emerald-800 dark:text-emerald-300">
                 {selectedScheme.maxBenefit}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs font-medium text-slate-600">
                 Calculated according to demo scheme guidelines. Official sanction will be confirmed by the competent district authority.
               </p>
             </div>

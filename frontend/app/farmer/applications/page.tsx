@@ -149,12 +149,12 @@ export default function ApplicationsPage() {
           ["Approved", approved, "Sanction ready"],
           ["Action Needed", docsRequired, "Documents requested"],
         ].map(([label, val, note]) => (
-          <Card key={label as string} className="glass p-4">
-            <p className="text-xs text-slate-400">{label as string}</p>
+          <Card key={label as string} className="glass p-4 border border-slate-200/80">
+            <p className="text-xs font-semibold text-slate-600">{label as string}</p>
             <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">
               {val as number}
             </p>
-            <p className="mt-1 text-[11px] text-slate-500">{note as string}</p>
+            <p className="mt-1 text-[11px] font-medium text-slate-600">{note as string}</p>
           </Card>
         ))}
       </div>
@@ -217,12 +217,12 @@ export default function ApplicationsPage() {
                     <td className="font-semibold text-slate-900 dark:text-white">
                       {app.schemeName}
                     </td>
-                    <td className="font-mono text-xs">{app.applicationNumber}</td>
-                    <td className="text-xs text-slate-500">{app.submittedAt}</td>
+                    <td className="font-mono text-xs font-semibold text-slate-800">{app.applicationNumber}</td>
+                    <td className="text-xs font-medium text-slate-600">{app.submittedAt}</td>
                     <td>
                       <StatusBadge status={app.status} />
                     </td>
-                    <td className="max-w-[220px] truncate text-xs text-slate-500">
+                    <td className="max-w-[220px] truncate text-xs font-medium text-slate-600">
                       {app.remarks || "—"}
                     </td>
                     <td>

@@ -174,9 +174,9 @@ export default function IvrPage() {
         <Card>
           <h3 className="font-bold text-slate-900">Your recent calls and requests</h3>
           {historyError ? (
-            <p className="mt-3 text-sm text-slate-600">{historyError}</p>
+            <p className="mt-3 text-sm font-medium text-slate-600">{historyError}</p>
           ) : calls.length === 0 && escalations.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">No voice call or escalation records are available.</p>
+            <p className="mt-3 text-sm font-medium text-slate-600">No voice call or escalation records are available.</p>
           ) : (
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
               {calls.slice(0, 3).map((call) => (
@@ -193,7 +193,7 @@ export default function IvrPage() {
               ))}
             </ul>
           )}
-          <p className="mt-3 text-xs text-slate-400">Call recordings and raw speech transcripts are not retained.</p>
+          <p className="mt-3 text-xs font-semibold text-slate-600">Call recordings and raw speech transcripts are not retained.</p>
         </Card>
       </div>
 
